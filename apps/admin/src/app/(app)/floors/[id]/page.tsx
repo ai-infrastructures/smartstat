@@ -1,13 +1,16 @@
 import { notFound } from "next/navigation";
+import Link from "next/link";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getFloor } from "@/lib/data/floors";
 import { getBuilding } from "@/lib/data/buildings";
 import { getTenant } from "@/lib/data/tenants";
 import { listPois } from "@/lib/data/pois";
 import { listNavNodes, listNavEdges } from "@/lib/data/navigation";
+import { getFloorPlanSignedUrl } from "@/lib/actions/floor-assets";
 import { PageHeader } from "@/components/PageHeader";
 import { FloorEditor } from "@/components/FloorEditor";
 import { PublishToggle } from "@/components/PublishToggle";
+import { FloorPlanUpload } from "@/components/FloorPlanUpload";
 
 export const dynamic = "force-dynamic";
 
@@ -26,9 +29,10 @@ export default async function FloorDetailPage({
     ? await getTenant(supabase, building.tenantId)
     : null;
 
-  const [pois, navNodes] = await Promise.all([
+  const [pois, navNodes, floorPlanUrl] = await Promise.all([
     listPois(supabase, { floorId: floor.id, activeOnly: true }),
     listNavNodes(supabase, { floorId: floor.id }),
+    getFloorPlanSignedUrl(floor.id),
   ]);
   const navEdges = await listNavEdges(supabase, {
     nodeIds: navNodes.map((n) => n.id),
@@ -48,15 +52,31 @@ export default async function FloorDetailPage({
             : []),
           { label: floor.name },
         ]}
-        action={<PublishToggle floorId={floor.id} status={floor.scanStatus} />}
+        action={
+          <div className="flex items-center gap-2">
+            <Link
+              href={`/floors/${floor.id}/qr`}
+              className="rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800"
+            >
+              🖨 QR codes
+            </Link>
+            <PublishToggle floorId={floor.id} status={floor.scanStatus} />
+          </div>
+        }
       />
 
-      <div className="px-8 py-6">
+      <div className="space-y-4 px-8 py-6">
+        <FloorPlanUpload
+          floorId={floor.id}
+          hasFloorPlan={Boolean(floor.floorplan2dUrl)}
+        />
+
         <FloorEditor
           floor={floor}
           pois={pois}
           navNodes={navNodes}
           navEdges={navEdges}
+          floorPlanUrl={floorPlanUrl}
         />
       </div>
     </>

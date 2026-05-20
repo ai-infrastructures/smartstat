@@ -15,6 +15,13 @@ import {
   movePoiAction,
   updatePoiAction,
 } from "@/lib/actions/pois";
+import {
+  createQrAnchorAction,
+  createWaypointAction,
+  deleteNavNodeAction,
+  moveNavNodeAction,
+  regenerateFloorGraphAction,
+} from "@/lib/actions/nav";
 
 const CATEGORY_COLOR: Record<PoiCategory, string> = {
   department: "#3b82f6",
@@ -51,25 +58,36 @@ const CATEGORIES: PoiCategory[] = [
 ];
 
 type Mode = "view" | "add" | "edit";
+type AddSubMode = "poi" | "waypoint" | "qr";
 
 interface Props {
   floor: Floor;
   pois: Poi[];
   navNodes: NavNode[];
   navEdges: NavEdge[];
+  floorPlanUrl?: string | null;
 }
 
-export function FloorEditor({ floor, pois, navNodes, navEdges }: Props) {
+export function FloorEditor({
+  floor,
+  pois,
+  navNodes,
+  navEdges,
+  floorPlanUrl,
+}: Props) {
   const [mode, setMode] = useState<Mode>("view");
+  const [addSubMode, setAddSubMode] = useState<AddSubMode>("poi");
+  const [showNavGraph, setShowNavGraph] = useState(true);
   const [selectedPoiId, setSelectedPoiId] = useState<string | null>(null);
-  const [draftPoi, setDraftPoi] = useState<{ x: number; y: number } | null>(
+  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
+  const [draftPoint, setDraftPoint] = useState<{ x: number; y: number } | null>(
     null
   );
   const [fromPoiId, setFromPoiId] = useState<string | null>(null);
   const [toPoiId, setToPoiId] = useState<string | null>(null);
   const [wheelchair, setWheelchair] = useState(false);
   const [, startTransition] = useTransition();
-  const draggingRef = useRef<{ poiId: string } | null>(null);
+  const draggingRef = useRef<{ id: string; kind: "poi" | "node" } | null>(null);
   const svgRef = useRef<SVGSVGElement | null>(null);
 
   const bbox = floor.bbox ?? [0, 0, 60, 40];
@@ -106,8 +124,11 @@ export function FloorEditor({ floor, pois, navNodes, navEdges }: Props) {
     () => pois.find((p) => p.id === selectedPoiId) ?? null,
     [pois, selectedPoiId]
   );
+  const selectedNode = useMemo(
+    () => navNodes.find((n) => n.id === selectedNodeId) ?? null,
+    [navNodes, selectedNodeId]
+  );
 
-  /** Convert pointer event to floor-world coords */
   const pointerToWorld = useCallback(
     (clientX: number, clientY: number): { x: number; y: number } | null => {
       const svg = svgRef.current;
@@ -128,80 +149,171 @@ export function FloorEditor({ floor, pois, navNodes, navEdges }: Props) {
       if (mode !== "add") return;
       const w = pointerToWorld(e.clientX, e.clientY);
       if (!w) return;
-      setDraftPoi(w);
+
+      if (addSubMode === "poi") {
+        setDraftPoint(w);
+      } else if (addSubMode === "waypoint") {
+        const fd = new FormData();
+        fd.set("floorId", floor.id);
+        fd.set("x", w.x.toFixed(2));
+        fd.set("y", w.y.toFixed(2));
+        startTransition(async () => {
+          await createWaypointAction(fd);
+        });
+      } else {
+        const fd = new FormData();
+        fd.set("floorId", floor.id);
+        fd.set("x", w.x.toFixed(2));
+        fd.set("y", w.y.toFixed(2));
+        startTransition(async () => {
+          await createQrAnchorAction(fd);
+        });
+      }
     },
-    [mode, pointerToWorld]
+    [mode, addSubMode, floor.id, pointerToWorld]
   );
 
   const onPoiPointerDown = useCallback(
     (e: React.PointerEvent<SVGGElement>, poiId: string) => {
       if (mode !== "edit") return;
       (e.currentTarget as SVGGElement).setPointerCapture(e.pointerId);
-      draggingRef.current = { poiId };
+      draggingRef.current = { id: poiId, kind: "poi" };
       setSelectedPoiId(poiId);
+      setSelectedNodeId(null);
     },
     [mode]
   );
 
-  const onPoiPointerMove = useCallback(
+  const onNodePointerDown = useCallback(
+    (e: React.PointerEvent<SVGGElement>, nodeId: string) => {
+      if (mode !== "edit") return;
+      (e.currentTarget as SVGGElement).setPointerCapture(e.pointerId);
+      draggingRef.current = { id: nodeId, kind: "node" };
+      setSelectedNodeId(nodeId);
+      setSelectedPoiId(null);
+    },
+    [mode]
+  );
+
+  const onPointerMove = useCallback(
     (e: React.PointerEvent<SVGGElement>) => {
       const drag = draggingRef.current;
       if (!drag) return;
       const w = pointerToWorld(e.clientX, e.clientY);
       if (!w) return;
-      // Optimistic local update via DOM transform
       const g = e.currentTarget;
+      const baseX =
+        drag.kind === "poi"
+          ? getPoiX(pois, drag.id)
+          : getNodeX(navNodes, drag.id);
+      const baseY =
+        drag.kind === "poi"
+          ? getPoiY(pois, drag.id)
+          : getNodeY(navNodes, drag.id);
       g.setAttribute(
         "transform",
-        `translate(${w.x - getPoiX(pois, drag.poiId)}, ${
-          worldY(w.y) - worldY(getPoiY(pois, drag.poiId))
-        })`
+        `translate(${w.x - baseX}, ${worldY(w.y) - worldY(baseY)})`
       );
     },
-    [pointerToWorld, pois, worldY]
+    [pointerToWorld, pois, navNodes, worldY]
   );
 
-  const onPoiPointerUp = useCallback(
+  const onPointerUp = useCallback(
     (e: React.PointerEvent<SVGGElement>) => {
       const drag = draggingRef.current;
       if (!drag) return;
       draggingRef.current = null;
       (e.currentTarget as SVGGElement).releasePointerCapture(e.pointerId);
       const w = pointerToWorld(e.clientX, e.clientY);
-      // Reset transform; real position will arrive after revalidation
       (e.currentTarget as SVGGElement).removeAttribute("transform");
       if (!w) return;
 
       const fd = new FormData();
-      fd.set("poiId", drag.poiId);
-      fd.set("x", w.x.toFixed(2));
-      fd.set("y", w.y.toFixed(2));
-      startTransition(async () => {
-        await movePoiAction(fd);
-      });
+      if (drag.kind === "poi") {
+        fd.set("poiId", drag.id);
+        fd.set("x", w.x.toFixed(2));
+        fd.set("y", w.y.toFixed(2));
+        startTransition(async () => {
+          await movePoiAction(fd);
+        });
+      } else {
+        fd.set("nodeId", drag.id);
+        fd.set("floorId", floor.id);
+        fd.set("x", w.x.toFixed(2));
+        fd.set("y", w.y.toFixed(2));
+        startTransition(async () => {
+          await moveNavNodeAction(fd);
+        });
+      }
     },
-    [pointerToWorld]
+    [pointerToWorld, floor.id]
   );
 
   return (
     <div className="grid gap-4 lg:grid-cols-[1fr_340px]">
       <div className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
-        <div className="mb-3 flex items-center justify-between">
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50 p-1 dark:border-slate-800 dark:bg-slate-950">
             <ModeBtn current={mode} value="view" onClick={setMode}>
               👁 View
             </ModeBtn>
             <ModeBtn current={mode} value="add" onClick={setMode}>
-              ＋ Add POI
+              ＋ Add
             </ModeBtn>
             <ModeBtn current={mode} value="edit" onClick={setMode}>
               ✎ Edit
             </ModeBtn>
           </div>
-          <span className="text-xs text-slate-500">
-            {width.toFixed(0)}m × {height.toFixed(0)}m
-          </span>
+
+          <div className="flex items-center gap-2">
+            <label className="flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-400">
+              <input
+                type="checkbox"
+                checked={showNavGraph}
+                onChange={(e) => setShowNavGraph(e.target.checked)}
+                className="h-3.5 w-3.5"
+              />
+              Graph
+            </label>
+            <span className="text-xs text-slate-500">
+              {width.toFixed(0)}m × {height.toFixed(0)}m
+            </span>
+          </div>
         </div>
+
+        {/* Add sub-mode toolbar */}
+        {mode === "add" && (
+          <div className="mb-3 flex flex-wrap items-center gap-1.5 rounded-lg bg-amber-50 p-2 dark:bg-amber-950/30">
+            <span className="px-1 text-xs font-medium text-amber-800 dark:text-amber-200">
+              Add a:
+            </span>
+            <SubModeBtn
+              active={addSubMode === "poi"}
+              onClick={() => setAddSubMode("poi")}
+            >
+              ● POI
+            </SubModeBtn>
+            <SubModeBtn
+              active={addSubMode === "waypoint"}
+              onClick={() => setAddSubMode("waypoint")}
+            >
+              ◆ Waypoint
+            </SubModeBtn>
+            <SubModeBtn
+              active={addSubMode === "qr"}
+              onClick={() => setAddSubMode("qr")}
+            >
+              ⬛ QR anchor
+            </SubModeBtn>
+            <span className="ml-2 text-xs text-amber-700 dark:text-amber-300">
+              {addSubMode === "poi"
+                ? "Click to place a draft POI"
+                : addSubMode === "waypoint"
+                ? "Click to drop a corridor waypoint (auto-connects)"
+                : "Click to drop a QR calibration anchor (auto-connects)"}
+            </span>
+          </div>
+        )}
 
         <svg
           ref={svgRef}
@@ -214,6 +326,19 @@ export function FloorEditor({ floor, pois, navNodes, navEdges }: Props) {
           preserveAspectRatio="xMidYMid meet"
           onClick={onSvgClick}
         >
+          {/* Floor plan image as background (if uploaded) */}
+          {floorPlanUrl && (
+            <image
+              href={floorPlanUrl}
+              x={xMin}
+              y={yMin}
+              width={width}
+              height={height}
+              preserveAspectRatio="xMidYMid slice"
+              opacity={0.6}
+            />
+          )}
+
           {/* Floor outline */}
           <rect
             x={xMin}
@@ -226,8 +351,8 @@ export function FloorEditor({ floor, pois, navNodes, navEdges }: Props) {
             strokeDasharray="0.5 0.3"
           />
 
-          {/* Navigation edges */}
-          {mode === "view" &&
+          {/* Edges */}
+          {showNavGraph &&
             navEdges.map((e) => {
               const from = navNodes.find((n) => n.id === e.fromNodeId);
               const to = navNodes.find((n) => n.id === e.toNodeId);
@@ -241,7 +366,7 @@ export function FloorEditor({ floor, pois, navNodes, navEdges }: Props) {
                   y2={worldY(to.position.y)}
                   stroke="#cbd5e1"
                   strokeWidth={0.15}
-                  opacity={0.6}
+                  opacity={0.7}
                 />
               );
             })}
@@ -260,6 +385,76 @@ export function FloorEditor({ floor, pois, navNodes, navEdges }: Props) {
             />
           )}
 
+          {/* Waypoints (small) */}
+          {showNavGraph &&
+            navNodes
+              .filter((n) => n.type === "waypoint")
+              .map((n) => (
+                <g
+                  key={n.id}
+                  style={{ cursor: mode === "edit" ? "grab" : "default" }}
+                  onPointerDown={(e) => onNodePointerDown(e, n.id)}
+                  onPointerMove={onPointerMove}
+                  onPointerUp={onPointerUp}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (mode === "edit") {
+                      setSelectedNodeId(n.id);
+                      setSelectedPoiId(null);
+                    }
+                  }}
+                >
+                  <circle
+                    cx={n.position.x}
+                    cy={worldY(n.position.y)}
+                    r={selectedNodeId === n.id ? 0.5 : 0.25}
+                    fill={selectedNodeId === n.id ? "#0f172a" : "#94a3b8"}
+                  />
+                </g>
+              ))}
+
+          {/* QR anchors */}
+          {showNavGraph &&
+            navNodes
+              .filter((n) => n.qrCode)
+              .map((n) => (
+                <g
+                  key={n.id}
+                  style={{ cursor: mode === "edit" ? "grab" : "default" }}
+                  onPointerDown={(e) => onNodePointerDown(e, n.id)}
+                  onPointerMove={onPointerMove}
+                  onPointerUp={onPointerUp}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (mode === "edit") {
+                      setSelectedNodeId(n.id);
+                      setSelectedPoiId(null);
+                    }
+                  }}
+                >
+                  <rect
+                    x={n.position.x - 0.5}
+                    y={worldY(n.position.y) - 0.5}
+                    width={1.0}
+                    height={1.0}
+                    fill={selectedNodeId === n.id ? "#0f172a" : "#1e293b"}
+                    stroke={selectedNodeId === n.id ? "#facc15" : "none"}
+                    strokeWidth={0.2}
+                  />
+                  <text
+                    x={n.position.x}
+                    y={worldY(n.position.y) + 1.4}
+                    textAnchor="middle"
+                    fontSize={0.7}
+                    fill="#64748b"
+                    fontFamily="ui-monospace, monospace"
+                    className="pointer-events-none"
+                  >
+                    QR
+                  </text>
+                </g>
+              ))}
+
           {/* POIs */}
           {pois.map((p) => {
             const color = CATEGORY_COLOR[p.category] ?? CATEGORY_COLOR.other;
@@ -272,8 +467,8 @@ export function FloorEditor({ floor, pois, navNodes, navEdges }: Props) {
                 key={p.id}
                 style={{ cursor: mode === "edit" ? "grab" : "pointer" }}
                 onPointerDown={(e) => onPoiPointerDown(e, p.id)}
-                onPointerMove={onPoiPointerMove}
-                onPointerUp={onPoiPointerUp}
+                onPointerMove={onPointerMove}
+                onPointerUp={onPointerUp}
                 onClick={(e) => {
                   e.stopPropagation();
                   if (mode === "view") {
@@ -285,6 +480,7 @@ export function FloorEditor({ floor, pois, navNodes, navEdges }: Props) {
                     }
                   } else if (mode === "edit") {
                     setSelectedPoiId(p.id);
+                    setSelectedNodeId(null);
                   }
                 }}
               >
@@ -312,19 +508,19 @@ export function FloorEditor({ floor, pois, navNodes, navEdges }: Props) {
           })}
 
           {/* Draft POI marker */}
-          {mode === "add" && draftPoi && (
+          {mode === "add" && addSubMode === "poi" && draftPoint && (
             <g>
               <circle
-                cx={draftPoi.x}
-                cy={worldY(draftPoi.y)}
+                cx={draftPoint.x}
+                cy={worldY(draftPoint.y)}
                 r={1.0}
                 fill="#facc15"
                 stroke="#0f172a"
                 strokeWidth={0.25}
               />
               <text
-                x={draftPoi.x}
-                y={worldY(draftPoi.y) - 1.3}
+                x={draftPoint.x}
+                y={worldY(draftPoint.y) - 1.3}
                 textAnchor="middle"
                 fontSize={1}
                 fill="#0f172a"
@@ -336,24 +532,6 @@ export function FloorEditor({ floor, pois, navNodes, navEdges }: Props) {
             </g>
           )}
         </svg>
-
-        {/* Mode help */}
-        {mode === "add" && (
-          <p className="mt-2 text-xs text-slate-500">
-            Click on the floor to place a new POI. Then fill the form on the
-            right.
-          </p>
-        )}
-        {mode === "edit" && (
-          <p className="mt-2 text-xs text-slate-500">
-            Drag a POI to move it. Click to select and edit on the right.
-          </p>
-        )}
-        {mode === "view" && (
-          <p className="mt-2 text-xs text-slate-500">
-            Click two POIs to plot the shortest A* route between them.
-          </p>
-        )}
       </div>
 
       {/* Right panel */}
@@ -371,32 +549,57 @@ export function FloorEditor({ floor, pois, navNodes, navEdges }: Props) {
           />
         )}
 
-        {mode === "add" &&
-          (draftPoi ? (
+        {mode === "add" && addSubMode === "poi" && (
+          draftPoint ? (
             <AddPoiForm
               floorId={floor.id}
-              x={draftPoi.x}
-              y={draftPoi.y}
-              onDone={() => setDraftPoi(null)}
-              onCancel={() => setDraftPoi(null)}
+              x={draftPoint.x}
+              y={draftPoint.y}
+              onDone={() => setDraftPoint(null)}
+              onCancel={() => setDraftPoint(null)}
             />
           ) : (
             <div className="text-xs text-slate-500">
               Click anywhere on the floor to start placing a POI.
             </div>
-          ))}
+          )
+        )}
 
-        {mode === "edit" &&
-          (selectedPoi ? (
+        {mode === "add" && addSubMode !== "poi" && (
+          <div className="space-y-3">
+            <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
+              {addSubMode === "waypoint" ? "Place waypoints" : "Place QR anchors"}
+            </h3>
+            <p className="text-xs text-slate-500">
+              {addSubMode === "waypoint"
+                ? "Click on corridors and intersections. Each waypoint auto-connects to its nearest 3 neighbors (within 15m)."
+                : "Place QR markers every ~25m near elevators, intersections and entrances. Print them later from the QR codes panel."}
+            </p>
+            <RegenerateGraphButton floorId={floor.id} />
+          </div>
+        )}
+
+        {mode === "edit" && (
+          selectedPoi ? (
             <EditPoiForm
               poi={selectedPoi}
               onDeleted={() => setSelectedPoiId(null)}
             />
+          ) : selectedNode ? (
+            <EditNodeForm
+              node={selectedNode}
+              floorId={floor.id}
+              onDeleted={() => setSelectedNodeId(null)}
+            />
           ) : (
-            <div className="text-xs text-slate-500">
-              Click a POI on the map to edit it.
+            <div className="space-y-3">
+              <div className="text-xs text-slate-500">
+                Click a POI, waypoint or QR anchor to edit. Drag to move.
+              </div>
+              <RegenerateGraphButton floorId={floor.id} />
             </div>
-          ))}
+          )
+        )}
       </aside>
     </div>
   );
@@ -428,11 +631,41 @@ function ModeBtn({
   );
 }
 
+function SubModeBtn({
+  active,
+  onClick,
+  children,
+}: {
+  active: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={
+        active
+          ? "rounded-md bg-amber-600 px-2.5 py-1 text-xs font-semibold text-white"
+          : "rounded-md border border-amber-300 bg-white px-2.5 py-1 text-xs font-medium text-amber-700 hover:bg-amber-50 dark:border-amber-700 dark:bg-amber-950/50 dark:text-amber-300"
+      }
+    >
+      {children}
+    </button>
+  );
+}
+
 function getPoiX(pois: Poi[], id: string): number {
   return pois.find((p) => p.id === id)?.position.x ?? 0;
 }
 function getPoiY(pois: Poi[], id: string): number {
   return pois.find((p) => p.id === id)?.position.y ?? 0;
+}
+function getNodeX(nodes: NavNode[], id: string): number {
+  return nodes.find((n) => n.id === id)?.position.x ?? 0;
+}
+function getNodeY(nodes: NavNode[], id: string): number {
+  return nodes.find((n) => n.id === id)?.position.y ?? 0;
 }
 
 /* -------------------- Sub-panels -------------------- */
@@ -770,6 +1003,96 @@ function EditPoiForm({ poi, onDeleted }: { poi: Poi; onDeleted: () => void }) {
         {saving ? "Saving…" : "Save changes"}
       </button>
     </form>
+  );
+}
+
+function EditNodeForm({
+  node,
+  floorId,
+  onDeleted,
+}: {
+  node: NavNode;
+  floorId: string;
+  onDeleted: () => void;
+}) {
+  const [, startTransition] = useTransition();
+  const [pending, setPending] = useState(false);
+
+  async function remove() {
+    if (
+      !confirm(
+        `Delete this ${node.type === "qr_anchor" ? "QR anchor" : "waypoint"}? Connected edges will be removed too.`
+      )
+    )
+      return;
+    setPending(true);
+    const fd = new FormData();
+    fd.set("nodeId", node.id);
+    fd.set("floorId", floorId);
+    await deleteNavNodeAction(fd);
+    setPending(false);
+    onDeleted();
+  }
+
+  return (
+    <div key={node.id} className="space-y-3">
+      <div className="flex items-center justify-between">
+        <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
+          {node.type === "qr_anchor" ? "QR anchor" : "Waypoint"}
+        </h3>
+        <button
+          type="button"
+          onClick={remove}
+          disabled={pending}
+          className="text-xs text-red-600 hover:underline disabled:opacity-60"
+        >
+          Delete
+        </button>
+      </div>
+      <div className="font-mono text-xs text-slate-500">
+        ({node.position.x.toFixed(1)}, {node.position.y.toFixed(1)})
+      </div>
+      {node.qrCode && (
+        <div>
+          <div className="text-xs font-medium uppercase tracking-wider text-slate-500">
+            Anchor code
+          </div>
+          <code className="text-xs text-slate-700 dark:text-slate-300">
+            {node.qrCode}
+          </code>
+        </div>
+      )}
+      <p className="text-xs text-slate-500">
+        Drag the node on the map to reposition.
+      </p>
+    </div>
+  );
+}
+
+function RegenerateGraphButton({ floorId }: { floorId: string }) {
+  const [pending, startTransition] = useTransition();
+  const [msg, setMsg] = useState<string | null>(null);
+
+  return (
+    <div className="space-y-2">
+      <button
+        type="button"
+        disabled={pending}
+        onClick={() => {
+          setMsg(null);
+          const fd = new FormData();
+          fd.set("floorId", floorId);
+          startTransition(async () => {
+            const r = await regenerateFloorGraphAction(fd);
+            setMsg(r.ok ? "Graph regenerated." : `Failed: ${r.error}`);
+          });
+        }}
+        className="w-full rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-60 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800"
+      >
+        {pending ? "Regenerating…" : "🔄 Regenerate edges (auto-connect all nodes)"}
+      </button>
+      {msg && <div className="text-xs text-slate-500">{msg}</div>}
+    </div>
   );
 }
 

@@ -236,6 +236,21 @@ export async function getFloorGraph(
   return { nodes, edges };
 }
 
+/**
+ * Get a signed URL to display a floor plan image (private bucket).
+ * Returns null if no floor plan uploaded.
+ */
+export async function getFloorPlanUrl(
+  floorPlanKey: string | null
+): Promise<string | null> {
+  if (!floorPlanKey) return null;
+  const { data, error } = await supabase.storage
+    .from("floor-plans")
+    .createSignedUrl(floorPlanKey, 60 * 60); // 1h
+  if (error) return null;
+  return data?.signedUrl ?? null;
+}
+
 export async function logSearchEvent(opts: {
   tenantId: string;
   query: string;

@@ -12,6 +12,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Svg, {
   Circle,
+  Image as SvgImage,
   Line,
   Polyline,
   Rect,
@@ -29,6 +30,7 @@ import {
 import {
   getFloor,
   getFloorGraph,
+  getFloorPlanUrl,
   getPoi,
   listPoisForFloor,
 } from "../../lib/data";
@@ -44,6 +46,7 @@ export default function NavigateScreen() {
   const [edges, setEdges] = useState<NavEdge[]>([]);
   const [startPoiId, setStartPoiId] = useState<string | null>(null);
   const [wheelchair, setWheelchair] = useState(false);
+  const [floorPlanUrl, setFloorPlanUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -59,6 +62,12 @@ export default function NavigateScreen() {
         const fl = await getFloor(dest.floorId);
         if (!active) return;
         setFloor(fl);
+
+        if (fl?.floorplan2dUrl) {
+          getFloorPlanUrl(fl.floorplan2dUrl).then((u) => {
+            if (active) setFloorPlanUrl(u);
+          });
+        }
 
         const [poisList, graph] = await Promise.all([
           listPoisForFloor(dest.floorId),
@@ -186,6 +195,7 @@ export default function NavigateScreen() {
           destinationPoiId={destination.id}
           startPoiId={startPoiId}
           route={route}
+          floorPlanUrl={floorPlanUrl}
         />
       </View>
 
@@ -221,6 +231,7 @@ function FloorSvg({
   destinationPoiId,
   startPoiId,
   route,
+  floorPlanUrl,
 }: {
   floor: Floor;
   pois: Poi[];
@@ -229,6 +240,7 @@ function FloorSvg({
   destinationPoiId: string;
   startPoiId: string | null;
   route: Route | null;
+  floorPlanUrl: string | null;
 }) {
   const bbox = floor.bbox ?? [0, 0, 60, 40];
   const [xMin, yMin, xMax, yMax] = bbox;
@@ -254,6 +266,18 @@ function FloorSvg({
       height="100%"
       preserveAspectRatio="xMidYMid meet"
     >
+      {floorPlanUrl && (
+        <SvgImage
+          href={floorPlanUrl}
+          x={xMin}
+          y={yMin}
+          width={width}
+          height={height}
+          preserveAspectRatio="xMidYMid slice"
+          opacity={0.55}
+        />
+      )}
+
       <Rect
         x={xMin}
         y={yMin}

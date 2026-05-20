@@ -77,16 +77,29 @@ export async function createPoiAction(formData: FormData) {
 
   if (error) return { ok: false, error: error.message };
 
-  // Also create a nav node attached to this POI for pathfinding
-  await supabase.from("nav_nodes").insert({
-    floor_id: floorId,
-    tenant_id: floor.tenant_id,
-    type: "poi",
-    position_x: Number.isFinite(x) ? x : 0,
-    position_y: Number.isFinite(y) ? y : 0,
-    position_z: 0,
-    poi_id: data.id,
-  });
+  // Create the attached nav_node for pathfinding
+  const { data: nodeRow } = await supabase
+    .from("nav_nodes")
+    .insert({
+      floor_id: floorId,
+      tenant_id: floor.tenant_id,
+      type: "poi",
+      position_x: Number.isFinite(x) ? x : 0,
+      position_y: Number.isFinite(y) ? y : 0,
+      position_z: 0,
+      poi_id: data.id,
+    })
+    .select("id")
+    .single();
+
+  // Auto-connect the new node to its nearest neighbors so the POI is reachable
+  if (nodeRow?.id) {
+    await supabase.rpc("connect_node_to_nearest", {
+      p_node_id: nodeRow.id,
+      k: 2,
+      max_distance_m: 20.0,
+    });
+  }
 
   revalidatePath(`/floors/${floorId}`);
   revalidatePath("/pois");

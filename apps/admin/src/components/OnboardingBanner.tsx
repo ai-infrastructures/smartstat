@@ -38,11 +38,18 @@ export function OnboardingBanner() {
 
         <div className="flex flex-col items-stretch gap-2 md:items-end">
           <Link
-            href="/tenants/new"
-            className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 hover:shadow"
+            href="/new-map"
+            className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-gradient-to-br from-violet-600 to-fuchsia-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:shadow"
           >
-            <Plus className="h-4 w-4" strokeWidth={2.5} />
-            Create first tenant
+            <Sparkles className="h-4 w-4" strokeWidth={2.5} />
+            Start the guided setup
+          </Link>
+          <Link
+            href="/tenants/new"
+            className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-slate-300 bg-white px-5 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300"
+          >
+            <Plus className="h-3.5 w-3.5" strokeWidth={2.5} />
+            or create tenant only
           </Link>
           <span className="text-center text-[11px] text-slate-500">
             takes ~30 seconds

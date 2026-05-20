@@ -6,9 +6,16 @@ import { getTenant } from "../../../lib/data";
 import type { Tenant } from "@smartstat/shared";
 
 /**
- * Per-hospital layout: bottom tab bar with Search / Scan / Info.
+ * Per-hospital layout: bottom tab bar with Map / Places / Profile.
  *
- * The accent color of the tab bar follows the tenant's branding primary color.
+ * - Map: live floor view with user pin (primary entry)
+ * - Places: search bar + category chips + POI list
+ * - Profile: account, contacts, offline maps, switch hospital
+ *
+ * The Scan and Locate screens are reachable from inside the Map / Places
+ * screens but are NOT tabs themselves — they're transient interactions.
+ *
+ * The accent color of the tab bar follows the tenant's branding.
  */
 export default function HospitalTabsLayout() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -57,41 +64,47 @@ export default function HospitalTabsLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: "Search",
+          title: "Map",
           tabBarIcon: ({ color, focused }) => (
             <Feather
-              name="search"
+              name="map"
               size={focused ? 22 : 20}
               color={color}
             />
           ),
         }}
       />
+      <Tabs.Screen
+        name="places"
+        options={{
+          title: "Places",
+          tabBarIcon: ({ color, focused }) => (
+            <Feather
+              name="list"
+              size={focused ? 22 : 20}
+              color={color}
+            />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="profile"
+        options={{
+          title: "Profile",
+          tabBarIcon: ({ color, focused }) => (
+            <Feather
+              name="user"
+              size={focused ? 22 : 20}
+              color={color}
+            />
+          ),
+        }}
+      />
+      {/* The /scan route still exists at this path level for back-compat
+          but is hidden from the tab bar via href: null */}
       <Tabs.Screen
         name="scan"
-        options={{
-          title: "Scan",
-          tabBarIcon: ({ color, focused }) => (
-            <Feather
-              name="maximize"
-              size={focused ? 22 : 20}
-              color={color}
-            />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="info"
-        options={{
-          title: "Info",
-          tabBarIcon: ({ color, focused }) => (
-            <Feather
-              name="info"
-              size={focused ? 22 : 20}
-              color={color}
-            />
-          ),
-        }}
+        options={{ href: null }}
       />
     </Tabs>
   );

@@ -9,6 +9,7 @@ import {
   Layers,
   MapPin,
   ScrollText,
+  Sparkles,
   type LucideIcon,
 } from "lucide-react";
 import { UserMenu } from "./UserMenu";
@@ -45,6 +46,16 @@ export function Sidebar() {
             </span>
           </div>
         </div>
+      </div>
+
+      <div className="px-3 pt-3">
+        <Link
+          href="/new-map"
+          className="flex items-center gap-2.5 rounded-lg bg-gradient-to-br from-violet-600 to-fuchsia-600 px-3 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:shadow"
+        >
+          <Sparkles className="h-4 w-4" strokeWidth={2.5} />
+          New map
+        </Link>
       </div>
 
       <nav className="flex-1 px-3 py-4">

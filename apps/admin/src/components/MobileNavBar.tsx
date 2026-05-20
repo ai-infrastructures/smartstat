@@ -12,6 +12,7 @@ import {
   Layers,
   MapPin,
   ScrollText,
+  Sparkles,
   type LucideIcon,
 } from "lucide-react";
 
@@ -97,6 +98,17 @@ export function MobileNavBar() {
               >
                 <X className="h-5 w-5" strokeWidth={2} />
               </button>
+            </div>
+
+            <div className="px-3 pt-3">
+              <Link
+                href="/new-map"
+                onClick={() => setOpen(false)}
+                className="flex items-center gap-2.5 rounded-lg bg-gradient-to-br from-violet-600 to-fuchsia-600 px-3 py-2.5 text-sm font-semibold text-white shadow-sm"
+              >
+                <Sparkles className="h-4 w-4" strokeWidth={2.5} />
+                New map
+              </Link>
             </div>
 
             <ul className="flex-1 space-y-0.5 overflow-y-auto px-3 py-4">

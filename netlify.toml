@@ -1,40 +1,39 @@
 # Netlify deploy config for the SmartStat AI admin dashboard.
 #
-# Set this repo on Netlify with "Base directory" left empty (the build runs
-# from the repo root so the pnpm workspace can resolve @smartstat/shared).
+# Monorepo layout: the Next.js app is at apps/admin/. We set `base` to
+# that subdirectory so Netlify's OpenNext-based Next.js adapter
+# auto-detects the framework, provisions the SSR function + edge
+# middleware, and generates the right redirects.
 #
-# Required environment variables (set in Netlify UI → Site → Configuration
-# → Environment variables):
+# Note: with `base = "apps/admin"`, all commands run from that dir.
+# pnpm walks up to find pnpm-workspace.yaml at the repo root, so the
+# workspace dependency on @smartstat/shared still resolves correctly.
+#
+# Required environment variables (set in Netlify UI → Site →
+# Configuration → Environment variables):
 #   NEXT_PUBLIC_SUPABASE_URL
 #   NEXT_PUBLIC_SUPABASE_ANON_KEY
-#
-# When Vercel access arrives, this file can be deleted — vercel.json takes
-# over and the repo deploys identically there.
+#   RESEND_API_KEY (optional — falls back to dev-stub if missing)
+#   RESEND_FROM_ADDRESS, RESEND_FROM_NAME
 
 [build]
-  base = ""
-  # Netlify's "Installing dependencies" step already runs `pnpm install`
-  # via Corepack (pnpm 10.30.3) — so all we need to do here is run the
-  # actual build. Don't reinstall pnpm: it's already on PATH and `npm i -g`
-  # fails with EEXIST.
-  command = "pnpm --filter @smartstat/admin build"
-  publish = "apps/admin/.next"
-  ignore = "/bin/false"
+  base = "apps/admin"
+  # Don't pin a build command — let the Next.js adapter use its default
+  # (`next build`). It also auto-derives `publish` from the Next.js
+  # output, so we don't set that either.
 
 [build.environment]
-  # pnpm 11.x requires Node 22.13+ (uses node:sqlite built-in). Even though
-  # Corepack on Netlify currently activates pnpm 10.x, the lockfile is
-  # compatible and Node 22.13 is still required by other tooling.
+  # pnpm 11.x requires Node 22.13+ (uses node:sqlite built-in).
   NODE_VERSION = "22.13.0"
   NEXT_TELEMETRY_DISABLED = "1"
 
-# NOTE: we intentionally do NOT declare @netlify/plugin-nextjs here.
-# When pinned via netlify.toml Netlify installs an old bundled copy
-# (4.41.6) that can't resolve @opentelemetry/api from Next.js 16's
-# Edge Functions. Letting Netlify auto-detect via the UI uses the
-# current version (5.x) which works.
-# If the plugin isn't already installed on this site, add it once via:
-#   Netlify UI → Site → Plugins → Install "Next.js"
+# IMPORTANT: do NOT add a [[plugins]] entry for @netlify/plugin-nextjs.
+# Per Netlify docs (https://docs.netlify.com/build/frameworks/framework-setup-guides/nextjs/):
+# "We recommend that you don't pin the adapter version. We actively
+# maintain the adapter ... if you don't pin the version, we will
+# automatically use the latest version on each project build for you."
+# Pinning via [[plugins]] loads an older bundled copy (v4.x) that
+# can't bundle Next.js 16 middleware.
 
 # Headers (security + performance)
 [[headers]]

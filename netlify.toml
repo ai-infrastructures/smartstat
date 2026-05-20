@@ -30,13 +30,17 @@
   NODE_VERSION = "22.13.0"
   NEXT_TELEMETRY_DISABLED = "1"
 
-# IMPORTANT: do NOT add a [[plugins]] entry for @netlify/plugin-nextjs.
-# Per Netlify docs (https://docs.netlify.com/build/frameworks/framework-setup-guides/nextjs/):
-# "We recommend that you don't pin the adapter version. We actively
-# maintain the adapter ... if you don't pin the version, we will
-# automatically use the latest version on each project build for you."
-# Pinning via [[plugins]] loads an older bundled copy (v4.x) that
-# can't bundle Next.js 16 middleware.
+# Netlify's auto-attach of the OpenNext adapter only works for sites
+# that were detected as Next.js at creation time. This site was
+# created from a then-empty repo, so the adapter never auto-attached
+# (build log shows "0 new function(s) to upload" → just static files).
+#
+# Fix: install @netlify/plugin-nextjs@5.x as a devDep in apps/admin,
+# then reference it here. Because it's a real install (not the
+# bundled v4.x), Netlify loads the modern adapter that knows how to
+# bundle Next.js 16 middleware (including @opentelemetry/api).
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
 
 # Headers (security + performance)
 [[headers]]

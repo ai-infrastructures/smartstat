@@ -28,10 +28,13 @@
   NODE_VERSION = "22.13.0"
   NEXT_TELEMETRY_DISABLED = "1"
 
-# Tell Netlify which Next.js app to use (it auto-detects but we're explicit
-# because we're in a monorepo).
-[[plugins]]
-  package = "@netlify/plugin-nextjs"
+# NOTE: we intentionally do NOT declare @netlify/plugin-nextjs here.
+# When pinned via netlify.toml Netlify installs an old bundled copy
+# (4.41.6) that can't resolve @opentelemetry/api from Next.js 16's
+# Edge Functions. Letting Netlify auto-detect via the UI uses the
+# current version (5.x) which works.
+# If the plugin isn't already installed on this site, add it once via:
+#   Netlify UI → Site → Plugins → Install "Next.js"
 
 # Headers (security + performance)
 [[headers]]

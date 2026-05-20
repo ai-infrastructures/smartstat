@@ -6,7 +6,7 @@
  *   RESEND_FROM_NAME          display name in the From header
  *                              (default: "SmartStat AI")
  *   RESEND_FROM_ADDRESS       full from address
- *                              (default: "noreply@smartstat.app")
+ *                              (default: "noreply@testsmartstat.com")
  *   RESEND_REPLY_TO           optional default reply-to
  *
  * In dev, if RESEND_API_KEY is missing the helper logs the email body
@@ -18,7 +18,7 @@ import { Resend } from "resend";
 
 const apiKey = process.env.RESEND_API_KEY;
 const fromName = process.env.RESEND_FROM_NAME ?? "SmartStat AI";
-const fromAddress = process.env.RESEND_FROM_ADDRESS ?? "noreply@smartstat.app";
+const fromAddress = process.env.RESEND_FROM_ADDRESS ?? "noreply@testsmartstat.com";
 const replyTo = process.env.RESEND_REPLY_TO;
 
 const resend = apiKey ? new Resend(apiKey) : null;

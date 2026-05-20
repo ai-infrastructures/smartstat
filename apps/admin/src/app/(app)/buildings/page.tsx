@@ -42,7 +42,7 @@ export default async function BuildingsPage() {
                 <Link
                   key={b.id}
                   href={`/buildings/${b.id}`}
-                  className="group block rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-blue-300 hover:shadow dark:border-slate-800 dark:bg-slate-900 dark:hover:border-blue-700"
+                  className="group block rounded-2xl border border-slate-200/60 bg-white p-5 shadow-md transition hover:border-blue-300 hover:shadow dark:border-slate-800 dark:bg-slate-900 dark:hover:border-blue-700"
                 >
                   <div className="mb-3 flex items-center gap-2 text-xs text-slate-500">
                     {t && (

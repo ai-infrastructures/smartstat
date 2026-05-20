@@ -61,7 +61,7 @@ export default async function TenantDetailPage({
 
       <div className="space-y-6 px-4 py-5 md:px-8 md:py-6">
         {/* Branding preview */}
-        <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+        <section className="rounded-2xl border border-slate-200/60 bg-white p-5 shadow-md dark:border-slate-800 dark:bg-slate-900">
           <h2 className="mb-4 text-sm font-semibold text-slate-900 dark:text-white">
             Branding
           </h2>
@@ -93,7 +93,7 @@ export default async function TenantDetailPage({
         </div>
 
         {/* Analytics */}
-        <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+        <section className="rounded-2xl border border-slate-200/60 bg-white p-5 shadow-md dark:border-slate-800 dark:bg-slate-900">
           <header className="mb-4 flex items-center justify-between">
             <h2 className="text-sm font-semibold text-slate-900 dark:text-white">
               Analytics · last 30 days
@@ -120,7 +120,7 @@ export default async function TenantDetailPage({
         </section>
 
         {/* Buildings list */}
-        <section className="rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
+        <section className="rounded-2xl border border-slate-200/60 bg-white shadow-md dark:border-slate-800 dark:bg-slate-900">
           <header className="border-b border-slate-200 px-5 py-4 dark:border-slate-800">
             <h2 className="text-sm font-semibold text-slate-900 dark:text-white">
               Buildings
@@ -183,7 +183,7 @@ function BrandSwatch({ label, color }: { label: string; color: string }) {
 
 function StatTile({ label, value }: { label: string; value: number }) {
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+    <div className="rounded-2xl border border-slate-200/60 bg-white p-5 shadow-md dark:border-slate-800 dark:bg-slate-900">
       <div className="text-xs font-medium uppercase tracking-wider text-slate-500">
         {label}
       </div>

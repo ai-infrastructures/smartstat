@@ -35,7 +35,7 @@ export function SkeletonRow() {
 
 export function SkeletonTable({ rows = 5 }: { rows?: number }) {
   return (
-    <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
+    <div className="overflow-hidden rounded-2xl border border-slate-200/60 bg-white shadow-md dark:border-slate-800 dark:bg-slate-900">
       <div className="border-b border-slate-200 bg-slate-50 px-4 py-3 dark:border-slate-800 dark:bg-slate-950">
         <SkeletonBox className="h-3 w-24" />
       </div>
@@ -52,7 +52,7 @@ export function SkeletonTable({ rows = 5 }: { rows?: number }) {
 
 export function SkeletonCard() {
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+    <div className="rounded-2xl border border-slate-200/60 bg-white p-5 shadow-md dark:border-slate-800 dark:bg-slate-900">
       <SkeletonBox className="mb-3 h-3 w-20" />
       <SkeletonBox className="mb-2 h-5 w-2/3" />
       <SkeletonBox className="mb-4 h-3 w-1/2" />

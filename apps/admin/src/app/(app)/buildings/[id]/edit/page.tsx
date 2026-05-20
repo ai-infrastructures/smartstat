@@ -32,7 +32,7 @@ export default async function EditBuildingPage({
       <div className="px-4 py-5 md:px-8 md:py-6">
         <form
           action={updateBuildingAction}
-          className="max-w-2xl space-y-5 rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900"
+          className="max-w-2xl space-y-5 rounded-2xl border border-slate-200/60 bg-white p-6 shadow-md dark:border-slate-800 dark:bg-slate-900"
         >
           <input type="hidden" name="id" value={building.id} />
 

@@ -143,7 +143,7 @@ function Metric({
   return (
     <Link
       href={href}
-      className="group block rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-blue-300 hover:shadow dark:border-slate-800 dark:bg-slate-900 dark:hover:border-blue-700"
+      className="group block rounded-2xl border border-slate-200/60 bg-white p-5 shadow-md transition hover:border-blue-300 hover:shadow dark:border-slate-800 dark:bg-slate-900 dark:hover:border-blue-700"
     >
       <div className="text-xs font-medium uppercase tracking-wider text-slate-500">
         {label}
@@ -169,7 +169,7 @@ function Card({
   children: React.ReactNode;
 }) {
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+    <div className="rounded-2xl border border-slate-200/60 bg-white p-5 shadow-md dark:border-slate-800 dark:bg-slate-900">
       <h3 className="mb-3 text-sm font-semibold text-slate-900 dark:text-white">
         {title}
       </h3>

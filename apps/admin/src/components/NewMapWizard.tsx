@@ -119,8 +119,8 @@ export function NewMapWizard({
               }}
               className={
                 current
-                  ? "flex w-full items-center gap-3 rounded-xl border border-blue-200 bg-blue-50 p-3 text-left dark:border-blue-900 dark:bg-blue-950/40"
-                  : "flex w-full items-center gap-3 rounded-xl border border-slate-200 bg-white p-3 text-left transition hover:border-slate-300 dark:border-slate-800 dark:bg-slate-900"
+                  ? "flex w-full items-center gap-3 rounded-2xl border border-blue-200/70 bg-blue-50 p-3 text-left shadow-sm dark:border-blue-900 dark:bg-blue-950/40"
+                  : "flex w-full items-center gap-3 rounded-2xl border border-slate-200/60 bg-white p-3 text-left transition hover:border-slate-300 dark:border-slate-800 dark:bg-slate-900"
               }
             >
               <span
@@ -158,7 +158,7 @@ export function NewMapWizard({
       </aside>
 
       {/* Body */}
-      <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+      <div className="rounded-2xl border border-slate-200/60 bg-white p-6 shadow-md dark:border-slate-800 dark:bg-slate-900">
         {step === 1 && (
           <Step1
             tenants={initialTenants}

@@ -9,7 +9,7 @@ export default function Loading() {
           {Array.from({ length: 4 }, (_, i) => (
             <div
               key={i}
-              className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900"
+              className="rounded-2xl border border-slate-200/60 bg-white p-5 shadow-md dark:border-slate-800 dark:bg-slate-900"
             >
               <SkeletonBox className="mb-3 h-3 w-16" />
               <SkeletonBox className="h-7 w-10" />

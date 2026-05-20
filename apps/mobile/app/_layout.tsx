@@ -20,9 +20,10 @@ export default function RootLayout() {
         }}
       >
         <Stack.Screen name="index" options={{ headerShown: false }} />
+        {/* Hospital experience uses its own bottom tab bar — hide the stack header */}
         <Stack.Screen
           name="hospital/[id]"
-          options={{ title: "Hospital", headerBackTitle: "Back" }}
+          options={{ headerShown: false }}
         />
         <Stack.Screen
           name="navigate/[poiId]"

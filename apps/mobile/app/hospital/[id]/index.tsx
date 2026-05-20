@@ -8,7 +8,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { Stack, useLocalSearchParams, useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import type { Poi, Tenant } from "@smartstat/shared";
 import {
@@ -16,9 +16,15 @@ import {
   listBuildingsForTenant,
   searchPois,
   logSearchEvent,
-} from "../../lib/data";
-import { isPositionFresh, useUserPosition } from "../../lib/userPosition";
-import { categoryColor, colors, fontSize, radius, spacing } from "../../lib/theme";
+} from "../../../lib/data";
+import { isPositionFresh, useUserPosition } from "../../../lib/userPosition";
+import {
+  categoryColor,
+  colors,
+  fontSize,
+  radius,
+  spacing,
+} from "../../../lib/theme";
 
 export default function HospitalScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -94,15 +100,7 @@ export default function HospitalScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.safe} edges={["bottom"]}>
-      <Stack.Screen
-        options={{
-          title: tenant.name,
-          headerStyle: { backgroundColor: accent },
-          headerTintColor: "#fff",
-          headerTitleStyle: { color: "#fff", fontSize: 17, fontWeight: "600" },
-        }}
-      />
+    <SafeAreaView style={styles.safe} edges={["top"]}>
       <View style={[styles.banner, { backgroundColor: accent }]}>
         <Text style={styles.bannerTitle}>{tenant.name}</Text>
         <Text style={styles.bannerSubtitle}>
@@ -117,7 +115,7 @@ export default function HospitalScreen() {
         ) : (
           <TouchableOpacity
             style={styles.scanFromHospital}
-            onPress={() => router.push("/scan")}
+            onPress={() => router.push(`/hospital/${id}/scan`)}
           >
             <Text style={styles.scanFromHospitalText}>
               ⬛  Scan a QR to find &quot;You are here&quot;

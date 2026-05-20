@@ -13,25 +13,20 @@
 
 [build]
   base = ""
-  # We bypass corepack — Netlify's corepack has a stale signing key for
-  # pnpm 11.x ("Cannot find matching keyid") on Node 22.13. Installing
-  # pnpm via npm directly works reliably.
-  command = "npm install -g pnpm@11.1.3 && pnpm install --frozen-lockfile && pnpm --filter @smartstat/admin build"
+  # Netlify's "Installing dependencies" step already runs `pnpm install`
+  # via Corepack (pnpm 10.30.3) — so all we need to do here is run the
+  # actual build. Don't reinstall pnpm: it's already on PATH and `npm i -g`
+  # fails with EEXIST.
+  command = "pnpm --filter @smartstat/admin build"
   publish = "apps/admin/.next"
   ignore = "/bin/false"
 
 [build.environment]
-  # pnpm 11.x requires Node 22.13+ (uses node:sqlite built-in).
-  # If we drop below 22 the install crashes with ERR_UNKNOWN_BUILTIN_MODULE.
+  # pnpm 11.x requires Node 22.13+ (uses node:sqlite built-in). Even though
+  # Corepack on Netlify currently activates pnpm 10.x, the lockfile is
+  # compatible and Node 22.13 is still required by other tooling.
   NODE_VERSION = "22.13.0"
   NEXT_TELEMETRY_DISABLED = "1"
-  # Skip Netlify's own corepack-based pnpm detection — we install pnpm in
-  # the build command above. Without this, Netlify still tries corepack
-  # FIRST during the "Installing dependencies" stage and the deploy dies
-  # before our command can run.
-  NETLIFY_USE_PNPM = "false"
-  # Same effect, different env var Netlify also honours
-  COREPACK_ENABLE_AUTO_PIN = "0"
 
 # Tell Netlify which Next.js app to use (it auto-detects but we're explicit
 # because we're in a monorepo).

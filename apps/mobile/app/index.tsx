@@ -7,13 +7,22 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { useRouter } from "expo-router";
+import { Redirect, useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { APP_NAME_DEFAULT, type Tenant } from "@smartstat/shared";
 import { listTenants } from "../lib/data";
 import { colors, fontSize, radius, spacing } from "../lib/theme";
+import { IS_TENANT_LOCKED, TENANT_BUILD } from "../lib/tenantConfig";
 
 export default function HospitalSelectScreen() {
+  // White-label build: skip the directory and go straight into the tenant.
+  if (IS_TENANT_LOCKED && TENANT_BUILD.id) {
+    return <Redirect href={`/hospital/${TENANT_BUILD.id}`} />;
+  }
+  return <DirectoryScreen />;
+}
+
+function DirectoryScreen() {
   const router = useRouter();
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const [loading, setLoading] = useState(true);

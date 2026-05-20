@@ -1,0 +1,17 @@
+{
+  "$schema": "../schema.json",
+  "slug": "REPLACE-ME-slug",
+  "tenantId": "00000000-0000-0000-0000-000000000000",
+  "appName": "Replace Me Wayfinder",
+  "appShortName": "Replace Me",
+  "scheme": "replaceme",
+  "bundleId": "ai.smartstat.replaceme",
+  "androidPackage": "ai.smartstat.replaceme",
+  "version": "0.1.0",
+  "primaryColor": "#0066CC",
+  "secondaryColor": "#10B981",
+  "splashBackgroundColor": "#FFFFFF",
+  "supportEmail": "support@example.com",
+  "supportPhone": null,
+  "easProjectId": null
+}

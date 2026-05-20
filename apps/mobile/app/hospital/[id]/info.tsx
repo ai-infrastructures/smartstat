@@ -16,6 +16,7 @@ import {
   listBuildingsForTenant,
 } from "../../../lib/data";
 import { colors, fontSize, radius, spacing } from "../../../lib/theme";
+import { IS_TENANT_LOCKED } from "../../../lib/tenantConfig";
 
 export default function HospitalInfoScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -120,15 +121,17 @@ export default function HospitalInfoScreen() {
           </Text>
         </Section>
 
-        {/* Switch hospital */}
-        <TouchableOpacity
-          style={styles.switchBtn}
-          onPress={() => router.replace("/")}
-        >
-          <Text style={[styles.switchBtnText, { color: accent }]}>
-            ↺  Switch hospital
-          </Text>
-        </TouchableOpacity>
+        {/* Switch hospital — only in directory builds */}
+        {!IS_TENANT_LOCKED && (
+          <TouchableOpacity
+            style={styles.switchBtn}
+            onPress={() => router.replace("/")}
+          >
+            <Text style={[styles.switchBtnText, { color: accent }]}>
+              ↺  Switch hospital
+            </Text>
+          </TouchableOpacity>
+        )}
 
         <View style={{ height: 24 }} />
       </ScrollView>

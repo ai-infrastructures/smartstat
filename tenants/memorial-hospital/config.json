@@ -1,0 +1,17 @@
+{
+  "$schema": "../schema.json",
+  "slug": "memorial-hospital",
+  "tenantId": "00000000-0000-0000-0000-000000000000",
+  "appName": "Memorial Wayfinder",
+  "appShortName": "Memorial",
+  "scheme": "memorial",
+  "bundleId": "ai.smartstat.memorial",
+  "androidPackage": "ai.smartstat.memorial",
+  "version": "0.1.0",
+  "primaryColor": "#7C3AED",
+  "secondaryColor": "#F59E0B",
+  "splashBackgroundColor": "#FFFFFF",
+  "supportEmail": "wayfinding@memorial.example",
+  "supportPhone": "+1-555-0100",
+  "easProjectId": null
+}

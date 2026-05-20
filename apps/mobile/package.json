@@ -8,6 +8,12 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
+    "start:tenant": "cross-env-shell expo start",
+    "start:demo": "cross-env SMARTSTAT_TENANT_SLUG=demo-hospital expo start",
+    "start:memorial": "cross-env SMARTSTAT_TENANT_SLUG=memorial-hospital expo start",
+    "build:directory:preview": "eas build --profile directory-preview",
+    "build:demo:preview": "eas build --profile demo-hospital-preview",
+    "build:memorial:preview": "eas build --profile memorial-hospital-preview",
     "typecheck": "tsc --noEmit",
     "lint": "echo 'lint placeholder'"
   },
@@ -31,6 +37,7 @@
   "devDependencies": {
     "@types/node": "^20.19.41",
     "@types/react": "~19.1.0",
+    "cross-env": "^7.0.3",
     "typescript": "~5.9.2"
   }
 }

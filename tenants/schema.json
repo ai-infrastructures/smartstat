@@ -1,0 +1,77 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "TenantBuildConfig",
+  "description": "Per-tenant configuration injected into the Expo app config at build time.",
+  "type": "object",
+  "required": [
+    "slug",
+    "tenantId",
+    "appName",
+    "scheme",
+    "bundleId",
+    "androidPackage",
+    "version",
+    "primaryColor"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": { "type": "string" },
+    "slug": {
+      "type": "string",
+      "pattern": "^[a-z0-9-]+$",
+      "description": "URL-safe slug. Must match the folder name and the tenants.slug column in DB."
+    },
+    "tenantId": {
+      "type": "string",
+      "format": "uuid",
+      "description": "UUID of the tenant in the database. Baked into the app at build time."
+    },
+    "appName": {
+      "type": "string",
+      "description": "Full display name shown on the home screen and in stores."
+    },
+    "appShortName": {
+      "type": "string",
+      "description": "Optional short name when space is limited."
+    },
+    "scheme": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9]*$",
+      "description": "Deep-link scheme. Must be globally unique."
+    },
+    "bundleId": {
+      "type": "string",
+      "pattern": "^[a-zA-Z][a-zA-Z0-9-]*(\\.[a-zA-Z][a-zA-Z0-9-]*)+$",
+      "description": "iOS bundle identifier. Reverse-DNS. Must be globally unique."
+    },
+    "androidPackage": {
+      "type": "string",
+      "pattern": "^[a-zA-Z][a-zA-Z0-9_]*(\\.[a-zA-Z][a-zA-Z0-9_]*)+$",
+      "description": "Android package name. Reverse-DNS. Must be globally unique."
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "description": "Semantic version of the app."
+    },
+    "primaryColor": {
+      "type": "string",
+      "pattern": "^#[0-9A-Fa-f]{6}$",
+      "description": "Brand primary color. Should match tenants.branding.primaryColor."
+    },
+    "secondaryColor": {
+      "type": "string",
+      "pattern": "^#[0-9A-Fa-f]{6}$"
+    },
+    "splashBackgroundColor": {
+      "type": "string",
+      "pattern": "^#[0-9A-Fa-f]{6}$"
+    },
+    "supportEmail": { "type": ["string", "null"] },
+    "supportPhone": { "type": ["string", "null"] },
+    "easProjectId": {
+      "type": ["string", "null"],
+      "description": "Expo EAS project ID, created via `eas init` for this tenant."
+    }
+  }
+}

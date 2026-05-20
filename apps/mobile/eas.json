@@ -1,0 +1,67 @@
+{
+  "cli": {
+    "version": ">= 7.0.0",
+    "appVersionSource": "local"
+  },
+  "build": {
+    "_directory_base": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "channel": "directory",
+      "env": {
+        "SMARTSTAT_TENANT_SLUG": "directory"
+      }
+    },
+    "directory-preview": {
+      "extends": "_directory_base",
+      "distribution": "internal",
+      "ios": { "simulator": false },
+      "android": { "buildType": "apk" }
+    },
+    "directory-production": {
+      "extends": "_directory_base",
+      "developmentClient": false,
+      "distribution": "store",
+      "channel": "production",
+      "android": { "buildType": "app-bundle" }
+    },
+
+    "_tenant_base": {
+      "developmentClient": false,
+      "distribution": "internal"
+    },
+
+    "demo-hospital-preview": {
+      "extends": "_tenant_base",
+      "channel": "demo-hospital-preview",
+      "env": { "SMARTSTAT_TENANT_SLUG": "demo-hospital" },
+      "ios": { "simulator": false },
+      "android": { "buildType": "apk" }
+    },
+    "demo-hospital-production": {
+      "extends": "_tenant_base",
+      "distribution": "store",
+      "channel": "demo-hospital-prod",
+      "env": { "SMARTSTAT_TENANT_SLUG": "demo-hospital" },
+      "android": { "buildType": "app-bundle" }
+    },
+
+    "memorial-hospital-preview": {
+      "extends": "_tenant_base",
+      "channel": "memorial-hospital-preview",
+      "env": { "SMARTSTAT_TENANT_SLUG": "memorial-hospital" },
+      "ios": { "simulator": false },
+      "android": { "buildType": "apk" }
+    },
+    "memorial-hospital-production": {
+      "extends": "_tenant_base",
+      "distribution": "store",
+      "channel": "memorial-hospital-prod",
+      "env": { "SMARTSTAT_TENANT_SLUG": "memorial-hospital" },
+      "android": { "buildType": "app-bundle" }
+    }
+  },
+  "submit": {
+    "production": {}
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "$schema": "../schema.json",
+  "slug": "demo-hospital",
+  "tenantId": "11111111-1111-1111-1111-111111111111",
+  "appName": "Demo Hospital Wayfinder",
+  "appShortName": "Demo Hospital",
+  "scheme": "demohospital",
+  "bundleId": "ai.smartstat.demohospital",
+  "androidPackage": "ai.smartstat.demohospital",
+  "version": "0.1.0",
+  "primaryColor": "#0066CC",
+  "secondaryColor": "#10B981",
+  "splashBackgroundColor": "#FFFFFF",
+  "supportEmail": "support@demo-hospital.example",
+  "supportPhone": null,
+  "easProjectId": null
+}

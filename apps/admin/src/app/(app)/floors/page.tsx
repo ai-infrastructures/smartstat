@@ -4,6 +4,8 @@ import { listFloors } from "@/lib/data/floors";
 import { listBuildings } from "@/lib/data/buildings";
 import { PageHeader } from "@/components/PageHeader";
 
+export const dynamic = "force-dynamic";
+
 export default async function FloorsPage() {
   const supabase = await createSupabaseServerClient();
   const [floors, buildings] = await Promise.all([
@@ -17,6 +19,14 @@ export default async function FloorsPage() {
       <PageHeader
         title="Floors"
         description="Every floor with its scan and publish status."
+        action={
+          <Link
+            href="/floors/new"
+            className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-3.5 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700"
+          >
+            <span>+</span> New floor
+          </Link>
+        }
       />
 
       <div className="px-8 py-6">

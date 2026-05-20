@@ -17,6 +17,14 @@ export default async function BuildingsPage() {
       <PageHeader
         title="Buildings"
         description="All buildings across every tenant."
+        action={
+          <Link
+            href="/buildings/new"
+            className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-3.5 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700"
+          >
+            <span>+</span> New building
+          </Link>
+        }
       />
 
       <div className="px-8 py-6">

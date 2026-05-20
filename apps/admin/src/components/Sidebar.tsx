@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { UserMenu } from "./UserMenu";
 
 const NAV = [
   { href: "/", label: "Dashboard", icon: "◇" },
@@ -60,9 +61,7 @@ export function Sidebar() {
         </ul>
       </nav>
 
-      <div className="border-t border-slate-200 px-5 py-4 text-[10px] text-slate-400 dark:border-slate-800">
-        © {new Date().getFullYear()} SmartStat AI
-      </div>
+      <UserMenu />
     </aside>
   );
 }

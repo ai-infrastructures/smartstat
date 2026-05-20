@@ -6,7 +6,10 @@ import { getTenant } from "@/lib/data/tenants";
 import { listPois } from "@/lib/data/pois";
 import { listNavNodes, listNavEdges } from "@/lib/data/navigation";
 import { PageHeader } from "@/components/PageHeader";
-import { FloorMap } from "@/components/FloorMap";
+import { FloorEditor } from "@/components/FloorEditor";
+import { PublishToggle } from "@/components/PublishToggle";
+
+export const dynamic = "force-dynamic";
 
 export default async function FloorDetailPage({
   params,
@@ -41,19 +44,15 @@ export default async function FloorDetailPage({
             ? [{ label: tenant.name, href: `/tenants/${tenant.id}` }]
             : []),
           ...(building
-            ? [
-                {
-                  label: building.name,
-                  href: `/buildings/${building.id}`,
-                },
-              ]
+            ? [{ label: building.name, href: `/buildings/${building.id}` }]
             : []),
           { label: floor.name },
         ]}
+        action={<PublishToggle floorId={floor.id} status={floor.scanStatus} />}
       />
 
       <div className="px-8 py-6">
-        <FloorMap
+        <FloorEditor
           floor={floor}
           pois={pois}
           navNodes={navNodes}

@@ -19,6 +19,14 @@ export default async function TenantsPage() {
       <PageHeader
         title="Tenants"
         description="Each tenant is one hospital (or facility) using SmartStat AI."
+        action={
+          <Link
+            href="/tenants/new"
+            className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-3.5 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700"
+          >
+            <span>+</span> New tenant
+          </Link>
+        }
       />
 
       <div className="px-8 py-6">

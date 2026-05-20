@@ -17,11 +17,14 @@ import {
   searchPois,
   logSearchEvent,
 } from "../../lib/data";
+import { isPositionFresh, useUserPosition } from "../../lib/userPosition";
 import { categoryColor, colors, fontSize, radius, spacing } from "../../lib/theme";
 
 export default function HospitalScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
+  const userPos = useUserPosition();
+  const posFresh = isPositionFresh(userPos) && userPos?.tenantId === id;
   const [tenant, setTenant] = useState<Tenant | null>(null);
   const [results, setResults] = useState<Poi[]>([]);
   const [query, setQuery] = useState("");
@@ -105,14 +108,22 @@ export default function HospitalScreen() {
         <Text style={styles.bannerSubtitle}>
           {tenant.branding.appDisplayName}
         </Text>
-        <TouchableOpacity
-          style={styles.scanFromHospital}
-          onPress={() => router.push("/scan")}
-        >
-          <Text style={styles.scanFromHospitalText}>
-            ⬛  Scan a QR to find &quot;You are here&quot;
-          </Text>
-        </TouchableOpacity>
+        {posFresh ? (
+          <View style={styles.locatedPill}>
+            <Text style={styles.locatedText}>
+              📍 You are here · anchor {userPos?.anchorCode}
+            </Text>
+          </View>
+        ) : (
+          <TouchableOpacity
+            style={styles.scanFromHospital}
+            onPress={() => router.push("/scan")}
+          >
+            <Text style={styles.scanFromHospitalText}>
+              ⬛  Scan a QR to find &quot;You are here&quot;
+            </Text>
+          </TouchableOpacity>
+        )}
       </View>
 
       <View style={styles.searchBox}>
@@ -222,6 +233,15 @@ const styles = StyleSheet.create({
     fontSize: fontSize.sm,
     fontWeight: "600",
   },
+  locatedPill: {
+    marginTop: spacing.md,
+    alignSelf: "flex-start",
+    backgroundColor: "rgba(16,185,129,0.95)",
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: radius.pill,
+  },
+  locatedText: { color: "#fff", fontSize: fontSize.sm, fontWeight: "700" },
   searchBox: {
     marginHorizontal: spacing.xl,
     marginTop: -16,

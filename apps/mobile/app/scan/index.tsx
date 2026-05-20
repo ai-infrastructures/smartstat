@@ -10,6 +10,7 @@ import { CameraView, useCameraPermissions } from "expo-camera";
 import { useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { findQrAnchor } from "../../lib/data";
+import { setUserPosition } from "../../lib/userPosition";
 import { colors, fontSize, radius, spacing } from "../../lib/theme";
 
 export default function ScanScreen() {
@@ -42,18 +43,20 @@ export default function ScanScreen() {
           return;
         }
 
-        // Navigate into the hospital's POI search, prefilled with the
-        // tenant. The user can then pick a destination; we pass the
-        // anchor coords so the navigation screen uses them as start.
-        router.replace({
-          pathname: `/hospital/${hit.tenant.id}`,
-          params: {
-            startX: hit.node.position.x.toString(),
-            startY: hit.node.position.y.toString(),
-            startFloorId: hit.floor.id,
-            anchorCode: data,
-          },
+        // Persist the position globally so subsequent screens can use it
+        // as the start point for navigation.
+        setUserPosition({
+          tenantId: hit.tenant.id,
+          buildingId: hit.building.id,
+          floorId: hit.floor.id,
+          x: hit.node.position.x,
+          y: hit.node.position.y,
+          anchorNodeId: hit.node.id,
+          anchorCode: data,
+          scannedAt: Date.now(),
         });
+
+        router.replace(`/hospital/${hit.tenant.id}`);
       } catch {
         setStatus("not_found");
         setTimeout(() => {

@@ -47,3 +47,42 @@ export async function createTenantAction(formData: FormData): Promise<void> {
   revalidatePath("/tenants");
   redirect(`/tenants/${data.id}`);
 }
+
+export async function updateTenantAction(formData: FormData): Promise<void> {
+  const id = String(formData.get("id") ?? "");
+  const name = String(formData.get("name") ?? "").trim();
+  const appDisplayName =
+    String(formData.get("appDisplayName") ?? "").trim() || name;
+  const primaryColor =
+    String(formData.get("primaryColor") ?? "#0066CC") || "#0066CC";
+  const secondaryColor =
+    String(formData.get("secondaryColor") ?? "#10B981") || "#10B981";
+  const supportEmail =
+    String(formData.get("supportEmail") ?? "").trim() || null;
+  const supportPhone =
+    String(formData.get("supportPhone") ?? "").trim() || null;
+
+  if (!id || !name) throw new Error("Id and name are required");
+
+  const supabase = await createSupabaseServerClient();
+  const { error } = await supabase
+    .from("tenants")
+    .update({
+      name,
+      branding: {
+        appDisplayName,
+        logoUrl: "",
+        primaryColor,
+        secondaryColor,
+        supportEmail,
+        supportPhone,
+      },
+    })
+    .eq("id", id);
+
+  if (error) throw new Error(`updateTenant: ${error.message}`);
+
+  revalidatePath("/tenants");
+  revalidatePath(`/tenants/${id}`);
+  redirect(`/tenants/${id}`);
+}

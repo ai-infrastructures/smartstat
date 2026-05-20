@@ -35,11 +35,13 @@ import {
   getPoi,
   listPoisForFloor,
 } from "../../lib/data";
+import { isPositionFresh, useUserPosition } from "../../lib/userPosition";
 import { categoryColor, colors, fontSize, radius, spacing } from "../../lib/theme";
 
 export default function NavigateScreen() {
   const { poiId } = useLocalSearchParams<{ poiId: string }>();
   const router = useRouter();
+  const userPos = useUserPosition();
   const [destination, setDestination] = useState<Poi | null>(null);
   const [floor, setFloor] = useState<Floor | null>(null);
   const [pois, setPois] = useState<Poi[]>([]);
@@ -80,9 +82,20 @@ export default function NavigateScreen() {
         setNodes(graph.nodes);
         setEdges(graph.edges);
 
-        // Default start: first "entrance" POI on the floor, else null (asks user)
-        const entrance = poisList.find((p) => p.category === "entrance");
-        if (entrance) setStartPoiId(entrance.id);
+        // If we have a fresh scanned QR position on the same floor, start from there.
+        // Otherwise default to the first 'entrance' POI on the floor.
+        if (
+          isPositionFresh(userPos) &&
+          userPos?.floorId === dest.floorId
+        ) {
+          // We don't have a POI id for the QR anchor (it's a nav node).
+          // Synthesize: find the nav node by exact (x,y) and treat its id as start.
+          // The pathfinder works on node ids; we'll wire startNode directly.
+          // For the UI default toggle we still need a label, so we don't set startPoiId.
+        } else {
+          const entrance = poisList.find((p) => p.category === "entrance");
+          if (entrance) setStartPoiId(entrance.id);
+        }
       } catch (e) {
         if (active) setError(e instanceof Error ? e.message : "Failed");
       } finally {
@@ -100,15 +113,31 @@ export default function NavigateScreen() {
     return m;
   }, [nodes]);
 
+  // Determine start node id:
+  //  1. If we have a fresh scanned QR on this floor → use the anchor node directly
+  //  2. Otherwise fall back to the selected start POI's attached nav node
+  const startNodeId = useMemo(() => {
+    if (
+      isPositionFresh(userPos) &&
+      destination &&
+      userPos?.floorId === destination.floorId
+    ) {
+      return userPos.anchorNodeId;
+    }
+    if (startPoiId) {
+      return poiToNode.get(startPoiId)?.id ?? null;
+    }
+    return null;
+  }, [userPos, destination, startPoiId, poiToNode]);
+
   const route: Route | null = useMemo(() => {
-    if (!startPoiId || !destination) return null;
-    const startNode = poiToNode.get(startPoiId);
+    if (!startNodeId || !destination) return null;
     const goalNode = poiToNode.get(destination.id);
-    if (!startNode || !goalNode) return null;
-    return findPath(startNode.id, goalNode.id, nodes, edges, {
+    if (!goalNode) return null;
+    return findPath(startNodeId, goalNode.id, nodes, edges, {
       wheelchairAccessible: wheelchair,
     });
-  }, [startPoiId, destination, poiToNode, nodes, edges, wheelchair]);
+  }, [startNodeId, destination, poiToNode, nodes, edges, wheelchair]);
 
   // Speak the route every time it changes (and voice is on)
   useEffect(() => {
@@ -149,6 +178,8 @@ export default function NavigateScreen() {
   }
 
   const startPoi = pois.find((p) => p.id === startPoiId);
+  const usingScannedQR =
+    isPositionFresh(userPos) && userPos?.floorId === destination.floorId;
   const destColor = categoryColor[destination.category] ?? categoryColor.other;
 
   return (
@@ -173,17 +204,36 @@ export default function NavigateScreen() {
       </View>
 
       {/* Start selector */}
-      <TouchableOpacity style={styles.startBar} onPress={onChangeStart}>
-        <View style={styles.startIcon}>
-          <Text style={styles.startIconText}>▶</Text>
+      <TouchableOpacity
+        style={styles.startBar}
+        onPress={usingScannedQR ? () => router.push("/scan") : onChangeStart}
+      >
+        <View
+          style={[
+            styles.startIcon,
+            usingScannedQR && { backgroundColor: "rgba(16,185,129,0.2)" },
+          ]}
+        >
+          <Text
+            style={[
+              styles.startIconText,
+              usingScannedQR && { color: "#10b981" },
+            ]}
+          >
+            {usingScannedQR ? "📍" : "▶"}
+          </Text>
         </View>
         <View style={{ flex: 1 }}>
           <Text style={styles.startLabel}>Starting from</Text>
           <Text style={styles.startName}>
-            {startPoi?.displayName ?? "Tap to set start point"}
+            {usingScannedQR
+              ? `QR anchor ${userPos?.anchorCode}`
+              : startPoi?.displayName ?? "Tap to set start point"}
           </Text>
         </View>
-        <Text style={styles.startChange}>Change</Text>
+        <Text style={styles.startChange}>
+          {usingScannedQR ? "Rescan" : "Change"}
+        </Text>
       </TouchableOpacity>
 
       {/* Accessibility & voice toggles */}
@@ -219,6 +269,11 @@ export default function NavigateScreen() {
           startPoiId={startPoiId}
           route={route}
           floorPlanUrl={floorPlanUrl}
+          userPosition={
+            isPositionFresh(userPos) && userPos?.floorId === floor.id
+              ? { x: userPos.x, y: userPos.y }
+              : null
+          }
         />
       </View>
 
@@ -275,6 +330,7 @@ function FloorSvg({
   startPoiId,
   route,
   floorPlanUrl,
+  userPosition,
 }: {
   floor: Floor;
   pois: Poi[];
@@ -284,6 +340,7 @@ function FloorSvg({
   startPoiId: string | null;
   route: Route | null;
   floorPlanUrl: string | null;
+  userPosition: { x: number; y: number } | null;
 }) {
   const bbox = floor.bbox ?? [0, 0, 60, 40];
   const [xMin, yMin, xMax, yMax] = bbox;
@@ -361,6 +418,36 @@ function FloorSvg({
             .map((n) => `${n.position.x},${worldY(n.position.y)}`)
             .join(" ")}
         />
+      )}
+
+      {/* User position pin (from QR scan) */}
+      {userPosition && (
+        <G>
+          <Circle
+            cx={userPosition.x}
+            cy={worldY(userPosition.y)}
+            r={2.2}
+            fill="rgba(16,185,129,0.25)"
+          />
+          <Circle
+            cx={userPosition.x}
+            cy={worldY(userPosition.y)}
+            r={1.2}
+            fill="#10b981"
+            stroke="#fff"
+            strokeWidth={0.3}
+          />
+          <SvgText
+            x={userPosition.x}
+            y={worldY(userPosition.y) - 1.8}
+            fontSize={1.2}
+            textAnchor="middle"
+            fontWeight={700}
+            fill="#065f46"
+          >
+            You are here
+          </SvgText>
+        </G>
       )}
 
       {pois.map((p) => {

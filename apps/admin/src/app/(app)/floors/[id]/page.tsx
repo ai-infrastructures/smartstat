@@ -55,6 +55,12 @@ export default async function FloorDetailPage({
         action={
           <div className="flex items-center gap-2">
             <Link
+              href={`/floors/${floor.id}/edit`}
+              className="rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800"
+            >
+              ✎ Edit
+            </Link>
+            <Link
               href={`/floors/${floor.id}/qr`}
               className="rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800"
             >

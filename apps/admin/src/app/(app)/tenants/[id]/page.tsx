@@ -29,6 +29,14 @@ export default async function TenantDetailPage({
           { label: "Tenants", href: "/tenants" },
           { label: tenant.name },
         ]}
+        action={
+          <Link
+            href={`/tenants/${tenant.id}/edit`}
+            className="rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800"
+          >
+            ✎ Edit
+          </Link>
+        }
       />
 
       <div className="space-y-6 px-8 py-6">

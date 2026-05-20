@@ -50,6 +50,22 @@ export default async function BuildingDetailPage({
             : []),
           { label: building.name },
         ]}
+        action={
+          <div className="flex items-center gap-2">
+            <Link
+              href={`/floors/new?building=${building.id}`}
+              className="rounded-lg bg-blue-600 px-3.5 py-2 text-sm font-semibold text-white hover:bg-blue-700"
+            >
+              + New floor
+            </Link>
+            <Link
+              href={`/buildings/${building.id}/edit`}
+              className="rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800"
+            >
+              ✎ Edit
+            </Link>
+          </div>
+        }
       />
 
       <div className="space-y-6 px-8 py-6">

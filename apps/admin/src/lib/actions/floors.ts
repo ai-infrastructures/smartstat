@@ -58,6 +58,35 @@ export async function createFloorAction(formData: FormData): Promise<void> {
   redirect(`/floors/${data.id}`);
 }
 
+export async function updateFloorAction(formData: FormData): Promise<void> {
+  const id = String(formData.get("id") ?? "");
+  const level = parseInt(String(formData.get("level") ?? "0"), 10);
+  const name = String(formData.get("name") ?? "").trim();
+  const width = parseFloat(String(formData.get("width") ?? "60"));
+  const height = parseFloat(String(formData.get("height") ?? "40"));
+
+  if (!id || !name) throw new Error("Id and name are required");
+
+  const safeW = Number.isFinite(width) && width > 0 ? width : 60;
+  const safeH = Number.isFinite(height) && height > 0 ? height : 40;
+
+  const supabase = await createSupabaseServerClient();
+  const { error } = await supabase
+    .from("floors")
+    .update({
+      level: Number.isFinite(level) ? level : 0,
+      name,
+      bbox: [0, 0, safeW, safeH],
+    })
+    .eq("id", id);
+
+  if (error) throw new Error(`updateFloor: ${error.message}`);
+
+  revalidatePath("/floors");
+  revalidatePath(`/floors/${id}`);
+  redirect(`/floors/${id}`);
+}
+
 export async function publishFloorAction(
   formData: FormData
 ): Promise<{ ok: boolean; error?: string }> {

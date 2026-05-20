@@ -174,20 +174,15 @@ export async function searchPois(opts: {
   query: string;
   buildingId?: string;
 }): Promise<Poi[]> {
-  let q = supabase
-    .from("pois")
-    .select("*")
-    .eq("tenant_id", opts.tenantId)
-    .eq("is_active", true)
-    .limit(20);
-
-  if (opts.query.trim().length > 0) {
-    const safe = opts.query.replace(/[%_,]/g, "");
-    q = q.or(`display_name.ilike.%${safe}%,name.ilike.%${safe}%`);
-  }
-  const { data, error } = await q;
+  // Use the trigram-scored RPC for ranked results
+  const { data, error } = await supabase.rpc("search_pois_fuzzy", {
+    p_tenant_id: opts.tenantId,
+    p_query: opts.query,
+    p_building_id: opts.buildingId ?? null,
+    p_limit: 30,
+  });
   if (error) throw error;
-  return (data ?? []).map(mapPoi);
+  return (data ?? []).map((r: Record<string, unknown>) => mapPoi(r));
 }
 
 export async function listPoisForFloor(floorId: string): Promise<Poi[]> {

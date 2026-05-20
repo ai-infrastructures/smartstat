@@ -31,7 +31,7 @@ export default async function TenantsPage() {
         }
       />
 
-      <div className="px-8 py-6">
+      <div className="px-4 py-5 md:px-8 md:py-6">
         {tenants.length === 0 ? (
           <EmptyState />
         ) : (

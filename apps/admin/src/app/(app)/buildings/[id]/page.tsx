@@ -71,7 +71,7 @@ export default async function BuildingDetailPage({
         }
       />
 
-      <div className="space-y-6 px-8 py-6">
+      <div className="space-y-6 px-4 py-5 md:px-8 md:py-6">
         <section className="rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
           <header className="border-b border-slate-200 px-5 py-4 dark:border-slate-800">
             <h2 className="text-sm font-semibold text-slate-900 dark:text-white">

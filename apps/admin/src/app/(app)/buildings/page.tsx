@@ -29,7 +29,7 @@ export default async function BuildingsPage() {
         }
       />
 
-      <div className="px-8 py-6">
+      <div className="px-4 py-5 md:px-8 md:py-6">
         {buildings.length === 0 ? (
           <div className="rounded-xl border border-dashed border-slate-300 bg-white p-12 text-center dark:border-slate-700 dark:bg-slate-900">
             <p className="text-sm text-slate-500">No buildings yet.</p>

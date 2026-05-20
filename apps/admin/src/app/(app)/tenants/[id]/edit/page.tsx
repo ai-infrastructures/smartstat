@@ -28,7 +28,7 @@ export default async function EditTenantPage({
         ]}
       />
 
-      <div className="px-8 py-6">
+      <div className="px-4 py-5 md:px-8 md:py-6">
         <form
           action={updateTenantAction}
           className="max-w-2xl space-y-5 rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900"

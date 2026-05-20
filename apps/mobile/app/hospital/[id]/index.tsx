@@ -19,6 +19,7 @@ import {
   logSearchEvent,
 } from "../../../lib/data";
 import { isPositionFresh, useUserPosition } from "../../../lib/userPosition";
+import { hapticLight } from "../../../lib/haptics";
 import {
   categoryColor,
   colors,
@@ -156,6 +157,8 @@ export default function HospitalScreen() {
             style={styles.searchSpinner}
             onPress={() => onChange("")}
             hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel="Clear search"
           >
             <Feather name="x-circle" size={18} color={colors.textSubtle} />
           </TouchableOpacity>
@@ -176,7 +179,10 @@ export default function HospitalScreen() {
           <PoiRow
             poi={item}
             accent={accent}
-            onPress={() => router.push(`/navigate/${item.id}`)}
+            onPress={() => {
+              hapticLight();
+              router.push(`/navigate/${item.id}`);
+            }}
           />
         )}
         ListEmptyComponent={

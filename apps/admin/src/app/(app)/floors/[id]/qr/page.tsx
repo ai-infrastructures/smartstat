@@ -43,7 +43,7 @@ export default async function FloorQRPage({
         ]}
       />
 
-      <div className="px-8 py-6">
+      <div className="px-4 py-5 md:px-8 md:py-6">
         <QRPrintList floor={floor} anchors={anchors} tenantName={tenant?.name} />
       </div>
     </>

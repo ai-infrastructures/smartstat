@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   ScrollView,
@@ -38,6 +38,7 @@ import {
 } from "../../lib/data";
 import { supabase } from "../../lib/supabase/client";
 import { isPositionFresh, useUserPosition } from "../../lib/userPosition";
+import { hapticSuccess, hapticWarning } from "../../lib/haptics";
 import { categoryColor, colors, fontSize, radius, spacing } from "../../lib/theme";
 
 export default function NavigateScreen() {
@@ -206,6 +207,17 @@ export default function NavigateScreen() {
       Speech.stop();
     };
   }, [route, voiceOn]);
+
+  // Haptic feedback when a route is (re)computed
+  const lastRouteSignature = useRef<string | null>(null);
+  useEffect(() => {
+    if (!startNodeId || !destination) return;
+    const sig = `${startNodeId}->${destination.id}/${wheelchair ? "wc" : "n"}`;
+    if (lastRouteSignature.current === sig) return;
+    lastRouteSignature.current = sig;
+    if (route) hapticSuccess();
+    else hapticWarning();
+  }, [route, startNodeId, destination, wheelchair]);
 
   const onChangeStart = useCallback(() => {
     // simple cycling between candidates for now (entrances/QR-anchored)

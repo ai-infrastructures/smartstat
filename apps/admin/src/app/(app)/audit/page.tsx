@@ -41,7 +41,7 @@ export default async function AuditPage({
         description="Last 200 write operations across the platform. Required for HIPAA accountability."
       />
 
-      <div className="px-8 py-6">
+      <div className="px-4 py-5 md:px-8 md:py-6">
         {/* Resource filter chips */}
         <div className="mb-4 flex flex-wrap gap-1.5">
           {RESOURCE_TYPES.map((r) => {

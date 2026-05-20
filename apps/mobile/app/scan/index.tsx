@@ -12,6 +12,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import { findQrAnchor } from "../../lib/data";
 import { setUserPosition } from "../../lib/userPosition";
+import { hapticError, hapticSuccess } from "../../lib/haptics";
 import { colors, fontSize, radius, spacing } from "../../lib/theme";
 
 export default function ScanScreen() {
@@ -36,6 +37,7 @@ export default function ScanScreen() {
       try {
         const hit = await findQrAnchor(data.trim());
         if (!hit) {
+          hapticError();
           setStatus("not_found");
           setTimeout(() => {
             setScanned(false);
@@ -43,6 +45,8 @@ export default function ScanScreen() {
           }, 2000);
           return;
         }
+
+        hapticSuccess();
 
         // Persist the position globally so subsequent screens can use it
         // as the start point for navigation.
@@ -59,6 +63,7 @@ export default function ScanScreen() {
 
         router.replace(`/hospital/${hit.tenant.id}`);
       } catch {
+        hapticError();
         setStatus("not_found");
         setTimeout(() => {
           setScanned(false);
@@ -122,6 +127,8 @@ export default function ScanScreen() {
             onPress={() => router.back()}
             style={styles.closeBtn}
             hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel="Close scanner"
           >
             <Feather name="x" size={20} color="#fff" />
           </TouchableOpacity>

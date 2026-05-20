@@ -72,7 +72,7 @@ export default async function DashboardPage() {
         description="Overview of the SmartStat AI platform"
       />
 
-      <div className="px-8 py-6">
+      <div className="px-4 py-5 md:px-8 md:py-6">
         <ClaimSuperAdmin />
 
         {counts.ok && counts.tenants === 0 && <OnboardingBanner />}

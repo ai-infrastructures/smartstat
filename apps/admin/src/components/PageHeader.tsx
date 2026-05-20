@@ -18,7 +18,7 @@ export function PageHeader({
   action?: React.ReactNode;
 }) {
   return (
-    <header className="border-b border-slate-200/80 bg-white/70 px-8 py-6 backdrop-blur-sm dark:border-slate-800/80 dark:bg-slate-950/70">
+    <header className="border-b border-slate-200/80 bg-white/70 px-4 py-5 backdrop-blur-sm md:px-8 md:py-6 dark:border-slate-800/80 dark:bg-slate-950/70">
       {breadcrumbs && breadcrumbs.length > 0 && (
         <nav className="mb-2 flex items-center gap-1 text-xs text-slate-500">
           {breadcrumbs.map((b, i) => (

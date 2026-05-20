@@ -100,7 +100,10 @@ export function FloorEditor({
   const width = xMax - xMin;
   const height = yMax - yMin;
   const pad = Math.max(width, height) * 0.05;
-  const worldY = (y: number) => yMax + yMin - y;
+  const worldY = useCallback(
+    (y: number) => yMax + yMin - y,
+    [yMax, yMin]
+  );
 
   const poiToNode = useMemo(() => {
     const m = new Map<string, NavNode>();

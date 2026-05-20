@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import { Pencil, Printer } from "lucide-react";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getFloor } from "@/lib/data/floors";
 import { getBuilding } from "@/lib/data/buildings";
@@ -56,15 +57,17 @@ export default async function FloorDetailPage({
           <div className="flex items-center gap-2">
             <Link
               href={`/floors/${floor.id}/edit`}
-              className="rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 hover:shadow-sm dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800"
             >
-              ✎ Edit
+              <Pencil className="h-3.5 w-3.5" strokeWidth={2} />
+              Edit
             </Link>
             <Link
               href={`/floors/${floor.id}/qr`}
-              className="rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 hover:shadow-sm dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800"
             >
-              🖨 QR codes
+              <Printer className="h-3.5 w-3.5" strokeWidth={2} />
+              QR codes
             </Link>
             <PublishToggle floorId={floor.id} status={floor.scanStatus} />
           </div>

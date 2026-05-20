@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Plus } from "lucide-react";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { listFloors } from "@/lib/data/floors";
 import { listBuildings } from "@/lib/data/buildings";
@@ -22,9 +23,10 @@ export default async function FloorsPage() {
         action={
           <Link
             href="/floors/new"
-            className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-3.5 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700"
+            className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-3.5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 hover:shadow"
           >
-            <span>+</span> New floor
+            <Plus className="h-4 w-4" strokeWidth={2.5} />
+            New floor
           </Link>
         }
       />

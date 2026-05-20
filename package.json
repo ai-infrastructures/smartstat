@@ -17,6 +17,7 @@
     "clean": "pnpm -r exec rm -rf node_modules .next .expo dist"
   },
   "devDependencies": {
+    "sharp": "^0.34.5",
     "typescript": "^5.5.4"
   },
   "packageManager": "pnpm@11.1.3"

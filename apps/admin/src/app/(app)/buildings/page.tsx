@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Plus, ArrowRight } from "lucide-react";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { listBuildings } from "@/lib/data/buildings";
 import { listTenants } from "@/lib/data/tenants";
@@ -20,9 +21,10 @@ export default async function BuildingsPage() {
         action={
           <Link
             href="/buildings/new"
-            className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-3.5 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700"
+            className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-3.5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 hover:shadow"
           >
-            <span>+</span> New building
+            <Plus className="h-4 w-4" strokeWidth={2.5} />
+            New building
           </Link>
         }
       />
@@ -65,8 +67,9 @@ export default async function BuildingsPage() {
                     <span className="text-slate-500">
                       {b.floorCount} {b.floorCount === 1 ? "floor" : "floors"}
                     </span>
-                    <span className="text-slate-400 group-hover:text-blue-500">
-                      View →
+                    <span className="inline-flex items-center gap-1 text-slate-400 transition group-hover:gap-1.5 group-hover:text-blue-500">
+                      View
+                      <ArrowRight className="h-3 w-3" strokeWidth={2} />
                     </span>
                   </div>
                 </Link>

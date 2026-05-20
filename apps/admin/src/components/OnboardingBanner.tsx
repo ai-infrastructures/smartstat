@@ -1,12 +1,13 @@
 import Link from "next/link";
+import { Plus, Sparkles } from "lucide-react";
 
 export function OnboardingBanner() {
   return (
     <section className="mb-6 overflow-hidden rounded-2xl border border-blue-200 bg-gradient-to-br from-blue-50 to-indigo-50 dark:border-blue-900 dark:from-blue-950/50 dark:to-indigo-950/50">
       <div className="grid gap-6 p-6 md:grid-cols-[1fr_auto] md:items-center">
         <div>
-          <div className="mb-2 inline-flex items-center gap-2 rounded-full bg-white/80 px-2.5 py-1 text-xs font-medium text-blue-700 dark:bg-blue-950 dark:text-blue-300">
-            <span className="h-1.5 w-1.5 rounded-full bg-blue-500" />
+          <div className="mb-2 inline-flex items-center gap-1.5 rounded-full bg-white/80 px-2.5 py-1 text-xs font-medium text-blue-700 dark:bg-blue-950 dark:text-blue-300">
+            <Sparkles className="h-3 w-3" strokeWidth={2.5} />
             Get started in 4 steps
           </div>
           <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
@@ -38,9 +39,10 @@ export function OnboardingBanner() {
         <div className="flex flex-col items-stretch gap-2 md:items-end">
           <Link
             href="/tenants/new"
-            className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-blue-700"
+            className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 hover:shadow"
           >
-            + Create first tenant
+            <Plus className="h-4 w-4" strokeWidth={2.5} />
+            Create first tenant
           </Link>
           <span className="text-center text-[11px] text-slate-500">
             takes ~30 seconds

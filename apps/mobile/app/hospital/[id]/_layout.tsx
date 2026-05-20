@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Tabs, useLocalSearchParams } from "expo-router";
-import { Text, View, StyleSheet } from "react-native";
-import { colors, fontSize, spacing } from "../../../lib/theme";
+import { Feather } from "@expo/vector-icons";
+import { colors } from "../../../lib/theme";
 import { getTenant } from "../../../lib/data";
 import type { Tenant } from "@smartstat/shared";
 
@@ -37,13 +37,20 @@ export default function HospitalTabsLayout() {
         tabBarLabelStyle: {
           fontSize: 11,
           fontWeight: "600",
+          marginTop: 2,
         },
         tabBarStyle: {
           backgroundColor: colors.surface,
           borderTopColor: colors.border,
-          height: 64,
-          paddingBottom: 8,
-          paddingTop: 6,
+          borderTopWidth: 0.5,
+          height: 72,
+          paddingBottom: 12,
+          paddingTop: 10,
+          shadowColor: "#000",
+          shadowOpacity: 0.04,
+          shadowRadius: 8,
+          shadowOffset: { width: 0, height: -2 },
+          elevation: 8,
         },
       }}
     >
@@ -52,7 +59,11 @@ export default function HospitalTabsLayout() {
         options={{
           title: "Search",
           tabBarIcon: ({ color, focused }) => (
-            <TabIcon emoji="🔍" focused={focused} color={color} />
+            <Feather
+              name="search"
+              size={focused ? 22 : 20}
+              color={color}
+            />
           ),
         }}
       />
@@ -61,7 +72,11 @@ export default function HospitalTabsLayout() {
         options={{
           title: "Scan",
           tabBarIcon: ({ color, focused }) => (
-            <TabIcon emoji="⬛" focused={focused} color={color} />
+            <Feather
+              name="maximize"
+              size={focused ? 22 : 20}
+              color={color}
+            />
           ),
         }}
       />
@@ -70,38 +85,14 @@ export default function HospitalTabsLayout() {
         options={{
           title: "Info",
           tabBarIcon: ({ color, focused }) => (
-            <TabIcon emoji="ℹ︎" focused={focused} color={color} />
+            <Feather
+              name="info"
+              size={focused ? 22 : 20}
+              color={color}
+            />
           ),
         }}
       />
     </Tabs>
   );
 }
-
-function TabIcon({
-  emoji,
-  focused,
-  color,
-}: {
-  emoji: string;
-  focused: boolean;
-  color: string;
-}) {
-  return (
-    <View style={styles.iconWrap}>
-      <Text
-        style={[
-          styles.icon,
-          { color: focused ? color : colors.textSubtle },
-        ]}
-      >
-        {emoji}
-      </Text>
-    </View>
-  );
-}
-
-const styles = StyleSheet.create({
-  iconWrap: { alignItems: "center", justifyContent: "center" },
-  icon: { fontSize: 18, lineHeight: 22 },
-});

@@ -10,6 +10,7 @@ import {
 } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { Feather } from "@expo/vector-icons";
 import type { Poi, Tenant } from "@smartstat/shared";
 import {
   getTenant,
@@ -108,23 +109,32 @@ export default function HospitalScreen() {
         </Text>
         {posFresh ? (
           <View style={styles.locatedPill}>
+            <Feather name="map-pin" size={14} color="#fff" />
             <Text style={styles.locatedText}>
-              📍 You are here · anchor {userPos?.anchorCode}
+              You are here · {userPos?.anchorCode}
             </Text>
           </View>
         ) : (
           <TouchableOpacity
             style={styles.scanFromHospital}
             onPress={() => router.push(`/hospital/${id}/scan`)}
+            activeOpacity={0.85}
           >
+            <Feather name="maximize" size={14} color="#fff" />
             <Text style={styles.scanFromHospitalText}>
-              ⬛  Scan a QR to find &quot;You are here&quot;
+              Scan a QR to find &quot;You are here&quot;
             </Text>
           </TouchableOpacity>
         )}
       </View>
 
       <View style={styles.searchBox}>
+        <Feather
+          name="search"
+          size={18}
+          color={colors.textSubtle}
+          style={styles.searchLeadIcon}
+        />
         <TextInput
           style={styles.searchInput}
           placeholder="Search a department, room, service…"
@@ -135,13 +145,21 @@ export default function HospitalScreen() {
           onChangeText={onChange}
           returnKeyType="search"
         />
-        {searching && (
+        {searching ? (
           <ActivityIndicator
             size="small"
             style={styles.searchSpinner}
             color={accent}
           />
-        )}
+        ) : query.length > 0 ? (
+          <TouchableOpacity
+            style={styles.searchSpinner}
+            onPress={() => onChange("")}
+            hitSlop={8}
+          >
+            <Feather name="x-circle" size={18} color={colors.textSubtle} />
+          </TouchableOpacity>
+        ) : null}
       </View>
 
       {error && (
@@ -190,12 +208,21 @@ function PoiRow({
       </View>
       <View style={styles.rowBody}>
         <Text style={styles.rowTitle}>{poi.displayName}</Text>
-        <Text style={styles.rowSubtitle}>
-          {poi.category.replace("_", " ")}
-          {poi.accessibility.wheelchairAccessible ? "  ·  ♿" : ""}
-        </Text>
+        <View style={styles.rowSubtitleRow}>
+          <Text style={styles.rowSubtitle}>
+            {poi.category.replace("_", " ")}
+          </Text>
+          {poi.accessibility.wheelchairAccessible && (
+            <Feather
+              name="check-circle"
+              size={11}
+              color={colors.success}
+              style={{ marginLeft: 6 }}
+            />
+          )}
+        </View>
       </View>
-      <Text style={[styles.rowArrow, { color: accent }]}>›</Text>
+      <Feather name="chevron-right" size={20} color={accent} />
     </TouchableOpacity>
   );
 }
@@ -220,6 +247,9 @@ const styles = StyleSheet.create({
   },
   scanFromHospital: {
     marginTop: spacing.md,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
     backgroundColor: "rgba(255,255,255,0.18)",
     paddingVertical: spacing.sm,
     paddingHorizontal: spacing.md,
@@ -234,6 +264,9 @@ const styles = StyleSheet.create({
   locatedPill: {
     marginTop: spacing.md,
     alignSelf: "flex-start",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
     backgroundColor: "rgba(16,185,129,0.95)",
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
@@ -256,9 +289,10 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     elevation: 2,
   },
+  searchLeadIcon: { marginLeft: spacing.lg, marginRight: -8 },
   searchInput: {
     flex: 1,
-    paddingHorizontal: spacing.lg,
+    paddingHorizontal: spacing.md,
     paddingVertical: 14,
     fontSize: fontSize.base,
     color: colors.text,
@@ -291,13 +325,16 @@ const styles = StyleSheet.create({
   rowDot: { width: 10, height: 10, borderRadius: 5 },
   rowBody: { flex: 1 },
   rowTitle: { fontSize: fontSize.base, fontWeight: "600", color: colors.text },
+  rowSubtitleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 2,
+  },
   rowSubtitle: {
     fontSize: fontSize.xs,
     color: colors.textMuted,
-    marginTop: 2,
     textTransform: "capitalize",
   },
-  rowArrow: { fontSize: 24, marginLeft: spacing.md },
   empty: { padding: spacing.xxl, alignItems: "center" },
   emptyText: { color: colors.textMuted, fontSize: fontSize.sm },
   errorBox: {

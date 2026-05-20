@@ -13,6 +13,7 @@
     "@smartstat/shared": "workspace:*",
     "@supabase/ssr": "^0.5.2",
     "@supabase/supabase-js": "^2.46.1",
+    "lucide-react": "^1.16.0",
     "next": "16.2.6",
     "qrcode": "^1.5.4",
     "react": "19.2.4",

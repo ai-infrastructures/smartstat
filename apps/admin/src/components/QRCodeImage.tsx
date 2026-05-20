@@ -26,7 +26,6 @@ export async function QRCodeImage({
     <div
       className="rounded-md border border-slate-200 bg-white p-2 dark:border-slate-700"
       style={{ width: sizePx, height: sizePx }}
-      // eslint-disable-next-line react/no-danger
       dangerouslySetInnerHTML={{ __html: cleaned }}
     />
   );

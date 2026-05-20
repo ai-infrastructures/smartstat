@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { PageHeader } from "@/components/PageHeader";
 import { createTenantAction } from "@/lib/actions/tenants";
 import { FormField, TextInput, ColorInput } from "@/components/forms";
@@ -53,12 +54,12 @@ export default function NewTenantPage() {
           </div>
 
           <div className="flex items-center justify-end gap-2 pt-2">
-            <a
+            <Link
               href="/tenants"
               className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
             >
               Cancel
-            </a>
+            </Link>
             <button
               type="submit"
               className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"

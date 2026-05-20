@@ -9,6 +9,7 @@ import {
 } from "react-native";
 import { Redirect, useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { Feather } from "@expo/vector-icons";
 import { APP_NAME_DEFAULT, type Tenant } from "@smartstat/shared";
 import { listTenants } from "../lib/data";
 import { colors, fontSize, radius, spacing } from "../lib/theme";
@@ -109,7 +110,7 @@ function DirectoryScreen() {
         activeOpacity={0.85}
         onPress={() => router.push("/scan")}
       >
-        <Text style={styles.fabIcon}>⬛</Text>
+        <Feather name="maximize" size={18} color="#fff" />
         <Text style={styles.fabText}>Scan QR</Text>
       </TouchableOpacity>
     </SafeAreaView>
@@ -236,6 +237,5 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 4 },
     elevation: 6,
   },
-  fabIcon: { color: "#fff", fontSize: 16 },
   fabText: { color: "#fff", fontSize: fontSize.base, fontWeight: "700" },
 });

@@ -10,6 +10,7 @@ import {
 } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { Feather } from "@expo/vector-icons";
 import * as Speech from "expo-speech";
 import Svg, {
   Circle,
@@ -30,11 +31,10 @@ import {
 } from "@smartstat/shared";
 import {
   getFloor,
-  getFloorGraph,
+  getFloorBundle,
   getFloorPlanUrl,
   getPoi,
   listFloorsForBuilding,
-  listPoisForFloor,
 } from "../../lib/data";
 import { supabase } from "../../lib/supabase/client";
 import { isPositionFresh, useUserPosition } from "../../lib/userPosition";
@@ -50,6 +50,7 @@ export default function NavigateScreen() {
   const [pois, setPois] = useState<Poi[]>([]);
   const [nodes, setNodes] = useState<NavNode[]>([]);
   const [edges, setEdges] = useState<NavEdge[]>([]);
+  const [usingCachedData, setUsingCachedData] = useState(false);
   const [startPoiId, setStartPoiId] = useState<string | null>(null);
   const [wheelchair, setWheelchair] = useState(false);
   const [voiceOn, setVoiceOn] = useState(true);
@@ -66,9 +67,15 @@ export default function NavigateScreen() {
         if (!dest) throw new Error("Destination not found");
         setDestination(dest);
 
-        const fl = await getFloor(dest.floorId);
+        // One call: floor + POIs + graph, with offline cache fallback
+        const bundle = await getFloorBundle(dest.floorId);
         if (!active) return;
+        const fl = bundle.floor;
         setFloor(fl);
+        setPois(bundle.pois);
+        setNodes(bundle.nodes);
+        setEdges(bundle.edges);
+        setUsingCachedData(bundle.fromCache);
 
         if (fl?.buildingId) {
           listFloorsForBuilding(fl.buildingId)
@@ -84,14 +91,7 @@ export default function NavigateScreen() {
           });
         }
 
-        const [poisList, graph] = await Promise.all([
-          listPoisForFloor(dest.floorId),
-          getFloorGraph(dest.floorId),
-        ]);
-        if (!active) return;
-        setPois(poisList);
-        setNodes(graph.nodes);
-        setEdges(graph.edges);
+        const poisList = bundle.pois;
 
         // If we have a fresh scanned QR position on the same floor, start from there.
         // Otherwise default to the first 'entrance' POI on the floor.
@@ -130,14 +130,12 @@ export default function NavigateScreen() {
 
     const refresh = async () => {
       try {
-        const [poisList, graph] = await Promise.all([
-          listPoisForFloor(floorId),
-          getFloorGraph(floorId),
-        ]);
+        const bundle = await getFloorBundle(floorId);
         if (cancelled) return;
-        setPois(poisList);
-        setNodes(graph.nodes);
-        setEdges(graph.edges);
+        setPois(bundle.pois);
+        setNodes(bundle.nodes);
+        setEdges(bundle.edges);
+        setUsingCachedData(bundle.fromCache);
       } catch {
         /* swallow — next change will retry */
       }
@@ -245,6 +243,15 @@ export default function NavigateScreen() {
 
   return (
     <SafeAreaView style={styles.safe} edges={["bottom"]}>
+      {usingCachedData && (
+        <View style={styles.offlineBanner}>
+          <Feather name="cloud-off" size={12} color="#fff" />
+          <Text style={styles.offlineText}>
+            Offline · using cached map
+          </Text>
+        </View>
+      )}
+
       {/* Destination header */}
       <View style={styles.destBar}>
         <View style={[styles.destDot, { backgroundColor: destColor }]} />
@@ -268,6 +275,7 @@ export default function NavigateScreen() {
       <TouchableOpacity
         style={styles.startBar}
         onPress={usingScannedQR ? () => router.push("/scan") : onChangeStart}
+        activeOpacity={0.7}
       >
         <View
           style={[
@@ -275,14 +283,11 @@ export default function NavigateScreen() {
             usingScannedQR && { backgroundColor: "rgba(16,185,129,0.2)" },
           ]}
         >
-          <Text
-            style={[
-              styles.startIconText,
-              usingScannedQR && { color: "#10b981" },
-            ]}
-          >
-            {usingScannedQR ? "📍" : "▶"}
-          </Text>
+          <Feather
+            name={usingScannedQR ? "map-pin" : "play"}
+            size={14}
+            color={usingScannedQR ? "#10b981" : colors.primary}
+          />
         </View>
         <View style={{ flex: 1 }}>
           <Text style={styles.startLabel}>Starting from</Text>
@@ -342,7 +347,10 @@ export default function NavigateScreen() {
 
       {/* Accessibility & voice toggles */}
       <View style={styles.toggleRow}>
-        <Text style={styles.toggleLabel}>♿ Wheelchair accessible</Text>
+        <View style={styles.toggleLabelRow}>
+          <Feather name="users" size={14} color={colors.textMuted} />
+          <Text style={styles.toggleLabel}>Wheelchair accessible</Text>
+        </View>
         <Switch
           value={wheelchair}
           onValueChange={setWheelchair}
@@ -350,7 +358,14 @@ export default function NavigateScreen() {
         />
       </View>
       <View style={styles.toggleRow}>
-        <Text style={styles.toggleLabel}>🔊 Voice guidance</Text>
+        <View style={styles.toggleLabelRow}>
+          <Feather
+            name={voiceOn ? "volume-2" : "volume-x"}
+            size={14}
+            color={colors.textMuted}
+          />
+          <Text style={styles.toggleLabel}>Voice guidance</Text>
+        </View>
         <Switch
           value={voiceOn}
           onValueChange={(v) => {
@@ -687,6 +702,17 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
   },
   toggleLabel: { fontSize: fontSize.sm, color: colors.text },
+  toggleLabelRow: { flexDirection: "row", alignItems: "center", gap: 8 },
+  offlineBanner: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    backgroundColor: colors.warning,
+    paddingHorizontal: spacing.md,
+    paddingVertical: 6,
+    justifyContent: "center",
+  },
+  offlineText: { color: "#fff", fontSize: fontSize.xs, fontWeight: "700" },
   mapWrap: {
     flex: 1,
     minHeight: 220,

@@ -1,4 +1,9 @@
 import { supabase } from "../supabase/client";
+import {
+  buildingCache,
+  floorCache,
+  tenantsCache,
+} from "../offlineCache";
 import type {
   Tenant,
   Building,
@@ -108,12 +113,21 @@ function mapNavEdge(r: Record<string, unknown>): NavEdge {
 }
 
 export async function listTenants(): Promise<Tenant[]> {
-  const { data, error } = await supabase
-    .from("tenants")
-    .select("*")
-    .order("name");
-  if (error) throw error;
-  return (data ?? []).map(mapTenant);
+  try {
+    const { data, error } = await supabase
+      .from("tenants")
+      .select("*")
+      .order("name");
+    if (error) throw error;
+    const tenants = (data ?? []).map(mapTenant);
+    // Fire-and-forget cache write so the next cold-start offline still works
+    tenantsCache.write(tenants).catch(() => {});
+    return tenants;
+  } catch (err) {
+    const cached = await tenantsCache.read();
+    if (cached && cached.length > 0) return cached;
+    throw err;
+  }
 }
 
 export async function getTenant(id: string): Promise<Tenant | null> {
@@ -149,14 +163,28 @@ export async function getBuilding(id: string): Promise<Building | null> {
 }
 
 export async function listFloorsForBuilding(buildingId: string): Promise<Floor[]> {
-  const { data, error } = await supabase
-    .from("floors")
-    .select("*")
-    .eq("building_id", buildingId)
-    .eq("scan_status", "published")
-    .order("level", { ascending: false });
-  if (error) throw error;
-  return (data ?? []).map(mapFloor);
+  try {
+    const { data, error } = await supabase
+      .from("floors")
+      .select("*")
+      .eq("building_id", buildingId)
+      .eq("scan_status", "published")
+      .order("level", { ascending: false });
+    if (error) throw error;
+    const floors = (data ?? []).map(mapFloor);
+    // Update the building cache opportunistically
+    const cached = await buildingCache.read(buildingId).catch(() => null);
+    if (cached) {
+      buildingCache
+        .write({ building: cached.building, floors })
+        .catch(() => {});
+    }
+    return floors;
+  } catch (err) {
+    const cached = await buildingCache.read(buildingId);
+    if (cached) return cached.floors;
+    throw err;
+  }
 }
 
 export async function listPublishedFloors(buildingId: string): Promise<Floor[]> {
@@ -287,6 +315,45 @@ export async function getFloorPlanUrl(
     .createSignedUrl(floorPlanKey, 60 * 60); // 1h
   if (error) return null;
   return data?.signedUrl ?? null;
+}
+
+/**
+ * Fetch a complete navigation bundle for a floor in one call, with offline
+ * cache fallback. Used by the Navigate screen so the user can still see
+ * their map and route even with no connectivity.
+ */
+export async function getFloorBundle(floorId: string): Promise<{
+  floor: Floor | null;
+  pois: Poi[];
+  nodes: NavNode[];
+  edges: NavEdge[];
+  fromCache: boolean;
+}> {
+  try {
+    const [floor, pois, graph] = await Promise.all([
+      getFloor(floorId),
+      listPoisForFloor(floorId),
+      getFloorGraph(floorId),
+    ]);
+    if (floor) {
+      floorCache
+        .write({ floor, pois, nodes: graph.nodes, edges: graph.edges })
+        .catch(() => {});
+    }
+    return { floor, pois, nodes: graph.nodes, edges: graph.edges, fromCache: false };
+  } catch (err) {
+    const snap = await floorCache.read(floorId);
+    if (snap) {
+      return {
+        floor: snap.floor,
+        pois: snap.pois,
+        nodes: snap.nodes,
+        edges: snap.edges,
+        fromCache: true,
+      };
+    }
+    throw err;
+  }
 }
 
 export async function logSearchEvent(opts: {

@@ -9,6 +9,7 @@ import {
 import { CameraView, useCameraPermissions } from "expo-camera";
 import { useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { Feather } from "@expo/vector-icons";
 import { findQrAnchor } from "../../lib/data";
 import { setUserPosition } from "../../lib/userPosition";
 import { colors, fontSize, radius, spacing } from "../../lib/theme";
@@ -120,8 +121,9 @@ export default function ScanScreen() {
           <TouchableOpacity
             onPress={() => router.back()}
             style={styles.closeBtn}
+            hitSlop={8}
           >
-            <Text style={styles.closeText}>✕</Text>
+            <Feather name="x" size={20} color="#fff" />
           </TouchableOpacity>
           <Text style={styles.title}>Scan a SmartStat QR</Text>
           <View style={{ width: 40 }} />

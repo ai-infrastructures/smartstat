@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ArrowRight } from "lucide-react";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { PageHeader } from "@/components/PageHeader";
 import { ClaimSuperAdmin } from "@/components/ClaimSuperAdmin";
@@ -151,8 +152,9 @@ function Metric({
         <span className="text-3xl font-semibold tabular-nums text-slate-900 dark:text-white">
           {value}
         </span>
-        <span className="text-xs text-slate-400 transition group-hover:text-blue-500">
-          View →
+        <span className="inline-flex items-center gap-1 text-xs text-slate-400 transition group-hover:gap-1.5 group-hover:text-blue-500">
+          View
+          <ArrowRight className="h-3 w-3" strokeWidth={2} />
         </span>
       </div>
     </Link>

@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <!--
+    Monochrome version: white heart-arrow on transparent background.
+    Used as the foreground in Android adaptive icons (the platform draws
+    its own background behind it).
+  -->
+  <g>
+    <path
+      d="M512 820
+         C 380 720, 280 620, 240 500
+         C 215 420, 240 330, 320 305
+         C 388 285, 460 320, 512 390
+         C 564 320, 636 285, 704 305
+         C 784 330, 809 420, 784 500
+         C 744 620, 644 720, 512 820 Z"
+      fill="#FFFFFF"/>
+    <path
+      d="M512 470
+         L 460 540
+         L 488 540
+         L 488 620
+         L 536 620
+         L 536 540
+         L 564 540 Z"
+      fill="#0EA5E9"/>
+  </g>
+</svg>

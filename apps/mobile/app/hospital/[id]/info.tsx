@@ -10,10 +10,13 @@ import {
 } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { Feather } from "@expo/vector-icons";
 import type { Building, Tenant } from "@smartstat/shared";
 import {
+  getFloorBundle,
   getTenant,
   listBuildingsForTenant,
+  listFloorsForBuilding,
 } from "../../../lib/data";
 import { colors, fontSize, radius, spacing } from "../../../lib/theme";
 import { IS_TENANT_LOCKED } from "../../../lib/tenantConfig";
@@ -24,6 +27,8 @@ export default function HospitalInfoScreen() {
   const [tenant, setTenant] = useState<Tenant | null>(null);
   const [buildings, setBuildings] = useState<Building[]>([]);
   const [loading, setLoading] = useState(true);
+  const [downloading, setDownloading] = useState(false);
+  const [downloadDone, setDownloadDone] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -96,22 +101,70 @@ export default function HospitalInfoScreen() {
           <Section title="Support">
             {supportEmail && (
               <SupportRow
-                emoji="✉︎"
+                iconName="mail"
                 label="Email"
                 value={supportEmail}
                 onPress={() => Linking.openURL(`mailto:${supportEmail}`)}
+                accent={accent}
               />
             )}
             {supportPhone && (
               <SupportRow
-                emoji="☎"
+                iconName="phone"
                 label="Phone"
                 value={supportPhone}
                 onPress={() => Linking.openURL(`tel:${supportPhone}`)}
+                accent={accent}
               />
             )}
           </Section>
         )}
+
+        {/* Offline maps */}
+        <Section title="Offline maps">
+          <Text style={styles.muted}>
+            Download all published floors for this hospital so you can
+            navigate without internet.
+          </Text>
+          <TouchableOpacity
+            style={[styles.downloadBtn, { borderColor: accent }]}
+            disabled={downloading}
+            activeOpacity={0.8}
+            onPress={async () => {
+              if (buildings.length === 0) return;
+              setDownloading(true);
+              setDownloadDone(false);
+              try {
+                for (const b of buildings) {
+                  const floors = await listFloorsForBuilding(b.id);
+                  for (const f of floors) {
+                    await getFloorBundle(f.id);
+                  }
+                }
+                setDownloadDone(true);
+              } finally {
+                setDownloading(false);
+              }
+            }}
+          >
+            {downloading ? (
+              <ActivityIndicator size="small" color={accent} />
+            ) : (
+              <Feather
+                name={downloadDone ? "check" : "download"}
+                size={16}
+                color={accent}
+              />
+            )}
+            <Text style={[styles.downloadBtnText, { color: accent }]}>
+              {downloading
+                ? "Downloading…"
+                : downloadDone
+                ? "All maps downloaded"
+                : "Download maps for offline use"}
+            </Text>
+          </TouchableOpacity>
+        </Section>
 
         {/* About SmartStat */}
         <Section title="About">
@@ -126,9 +179,11 @@ export default function HospitalInfoScreen() {
           <TouchableOpacity
             style={styles.switchBtn}
             onPress={() => router.replace("/")}
+            activeOpacity={0.8}
           >
+            <Feather name="repeat" size={16} color={accent} />
             <Text style={[styles.switchBtnText, { color: accent }]}>
-              ↺  Switch hospital
+              Switch hospital
             </Text>
           </TouchableOpacity>
         )}
@@ -155,24 +210,28 @@ function Section({
 }
 
 function SupportRow({
-  emoji,
+  iconName,
   label,
   value,
   onPress,
+  accent,
 }: {
-  emoji: string;
+  iconName: keyof typeof Feather.glyphMap;
   label: string;
   value: string;
   onPress: () => void;
+  accent: string;
 }) {
   return (
-    <TouchableOpacity style={styles.supportRow} onPress={onPress}>
-      <Text style={styles.supportEmoji}>{emoji}</Text>
+    <TouchableOpacity style={styles.supportRow} onPress={onPress} activeOpacity={0.7}>
+      <View style={[styles.supportIcon, { backgroundColor: accent + "18" }]}>
+        <Feather name={iconName} size={18} color={accent} />
+      </View>
       <View style={{ flex: 1 }}>
         <Text style={styles.rowSubtitle}>{label}</Text>
         <Text style={styles.rowTitle}>{value}</Text>
       </View>
-      <Text style={styles.supportArrow}>›</Text>
+      <Feather name="chevron-right" size={20} color={colors.textSubtle} />
     </TouchableOpacity>
   );
 }
@@ -219,16 +278,35 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.sm,
     gap: spacing.md,
   },
-  supportEmoji: { fontSize: 22 },
-  supportArrow: { fontSize: 24, color: colors.textSubtle },
+  supportIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: "center",
+    justifyContent: "center",
+  },
   switchBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: spacing.sm,
     margin: spacing.xl,
     paddingVertical: spacing.md,
     backgroundColor: colors.surface,
     borderRadius: radius.lg,
     borderWidth: 1,
     borderColor: colors.border,
-    alignItems: "center",
   },
   switchBtnText: { fontSize: fontSize.base, fontWeight: "600" },
+  downloadBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: spacing.sm,
+    marginTop: spacing.md,
+    paddingVertical: spacing.md,
+    borderRadius: radius.md,
+    borderWidth: 1,
+  },
+  downloadBtnText: { fontSize: fontSize.sm, fontWeight: "600" },
 });

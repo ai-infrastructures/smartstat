@@ -13,8 +13,22 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "SmartStat AI · Admin",
-  description: "White-label indoor navigation for hospitals — admin dashboard.",
+  title: {
+    default: "SmartStat AI · Admin",
+    template: "%s · SmartStat AI",
+  },
+  description:
+    "White-label indoor navigation for hospitals — admin dashboard.",
+  applicationName: "SmartStat AI",
+  authors: [{ name: "SmartStat AI" }],
+  creator: "SmartStat AI",
+  themeColor: "#0EA5E9",
+  openGraph: {
+    title: "SmartStat AI",
+    description: "Find your way, faster.",
+    siteName: "SmartStat AI",
+    type: "website",
+  },
 };
 
 export default function RootLayout({
@@ -27,7 +41,9 @@ export default function RootLayout({
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full">{children}</body>
+      <body className="min-h-full bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-white">
+        {children}
+      </body>
     </html>
   );
 }

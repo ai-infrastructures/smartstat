@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { CheckCircle2, Mail } from "lucide-react";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 export function LoginForm() {
@@ -41,7 +42,7 @@ export function LoginForm() {
     return (
       <div className="space-y-4 text-center">
         <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100 text-emerald-600 dark:bg-emerald-950 dark:text-emerald-300">
-          ✓
+          <CheckCircle2 className="h-6 w-6" strokeWidth={2} />
         </div>
         <h2 className="text-base font-semibold text-slate-900 dark:text-white">
           Magic link sent
@@ -91,8 +92,9 @@ export function LoginForm() {
       <button
         type="submit"
         disabled={status === "sending"}
-        className="w-full rounded-lg bg-blue-600 px-3 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-blue-700 disabled:opacity-60"
+        className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-3 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 hover:shadow disabled:opacity-60"
       >
+        <Mail className="h-4 w-4" strokeWidth={2} />
         {status === "sending" ? "Sending…" : "Send magic link"}
       </button>
     </form>

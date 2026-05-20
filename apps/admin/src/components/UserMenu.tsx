@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { LogOut } from "lucide-react";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 interface MeRow {
@@ -56,12 +58,12 @@ export function UserMenu() {
 
   if (!me) {
     return (
-      <a
+      <Link
         href="/login"
         className="m-3 block rounded-md bg-blue-600 px-3 py-2 text-center text-xs font-semibold text-white hover:bg-blue-700"
       >
         Sign in
-      </a>
+      </Link>
     );
   }
 
@@ -81,10 +83,11 @@ export function UserMenu() {
         </div>
         <button
           onClick={signOut}
-          className="rounded-md p-1 text-slate-500 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-300"
+          className="rounded-md p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-300"
           title="Sign out"
+          aria-label="Sign out"
         >
-          ⎋
+          <LogOut className="h-4 w-4" strokeWidth={2} />
         </button>
       </div>
     </div>

@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1284 2778" width="1284" height="2778">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1D4ED8"/>
+      <stop offset="55%" stop-color="#0EA5E9"/>
+      <stop offset="100%" stop-color="#38BDF8"/>
+    </linearGradient>
+  </defs>
+  <rect width="1284" height="2778" fill="url(#bg)"/>
+  <g transform="translate(450 1100) scale(0.38)">
+    <path
+      d="M512 820
+         C 380 720, 280 620, 240 500
+         C 215 420, 240 330, 320 305
+         C 388 285, 460 320, 512 390
+         C 564 320, 636 285, 704 305
+         C 784 330, 809 420, 784 500
+         C 744 620, 644 720, 512 820 Z"
+      fill="#FFFFFF"/>
+    <path
+      d="M512 470
+         L 460 540
+         L 488 540
+         L 488 620
+         L 536 620
+         L 536 540
+         L 564 540 Z"
+      fill="#0EA5E9"/>
+  </g>
+  <text x="642" y="1900" font-family="system-ui, -apple-system, Geist, Inter, sans-serif"
+        font-size="86" font-weight="700" text-anchor="middle" fill="#FFFFFF" letter-spacing="-1.5">
+    SmartStat AI
+  </text>
+  <text x="642" y="1970" font-family="system-ui, -apple-system, Geist, Inter, sans-serif"
+        font-size="42" font-weight="400" text-anchor="middle" fill="rgba(255,255,255,0.78)">
+    Find your way, faster.
+  </text>
+</svg>

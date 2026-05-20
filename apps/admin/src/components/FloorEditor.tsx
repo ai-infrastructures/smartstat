@@ -1169,7 +1169,6 @@ function EditNodeForm({
   floorId: string;
   onDeleted: () => void;
 }) {
-  const [, startTransition] = useTransition();
   const [pending, setPending] = useState(false);
 
   async function remove() {

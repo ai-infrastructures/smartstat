@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import { Pencil, Plus } from "lucide-react";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getBuilding } from "@/lib/data/buildings";
 import { listFloors } from "@/lib/data/floors";
@@ -54,15 +55,17 @@ export default async function BuildingDetailPage({
           <div className="flex items-center gap-2">
             <Link
               href={`/floors/new?building=${building.id}`}
-              className="rounded-lg bg-blue-600 px-3.5 py-2 text-sm font-semibold text-white hover:bg-blue-700"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-3.5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 hover:shadow"
             >
-              + New floor
+              <Plus className="h-4 w-4" strokeWidth={2.5} />
+              New floor
             </Link>
             <Link
               href={`/buildings/${building.id}/edit`}
-              className="rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 hover:shadow-sm dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800"
             >
-              ✎ Edit
+              <Pencil className="h-3.5 w-3.5" strokeWidth={2} />
+              Edit
             </Link>
           </div>
         }

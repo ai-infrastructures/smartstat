@@ -2,6 +2,7 @@ import Link from "next/link";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { PageHeader } from "@/components/PageHeader";
 import { ClaimSuperAdmin } from "@/components/ClaimSuperAdmin";
+import { OnboardingBanner } from "@/components/OnboardingBanner";
 
 interface CountResult {
   ok: boolean;
@@ -72,6 +73,8 @@ export default async function DashboardPage() {
 
       <div className="px-8 py-6">
         <ClaimSuperAdmin />
+
+        {counts.ok && counts.tenants === 0 && <OnboardingBanner />}
 
         {!counts.ok && (
           <div className="mb-6 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-200">

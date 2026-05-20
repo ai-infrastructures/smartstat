@@ -26,6 +26,7 @@ function mapEdge(row: Record<string, unknown>): NavEdge {
     distance: row.distance_meters as number,
     wheelchairAccessible: (row.wheelchair_accessible as boolean) ?? true,
     oneWay: (row.one_way as boolean) ?? false,
+    source: (row.source as NavEdge["source"]) ?? "auto",
   };
 }
 

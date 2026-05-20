@@ -159,6 +159,7 @@ export async function createEdgeAction(
       distance_meters: distance,
       wheelchair_accessible: wheelchair,
       one_way: false,
+      source: "manual",
     },
     {
       tenant_id: a.tenant_id,
@@ -167,6 +168,7 @@ export async function createEdgeAction(
       distance_meters: distance,
       wheelchair_accessible: wheelchair,
       one_way: false,
+      source: "manual",
     },
   ];
 

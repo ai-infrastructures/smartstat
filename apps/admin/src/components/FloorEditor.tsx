@@ -386,12 +386,13 @@ export function FloorEditor({
             strokeDasharray="0.5 0.3"
           />
 
-          {/* Edges */}
+          {/* Edges — manual edges drawn thicker and in violet */}
           {showNavGraph &&
             navEdges.map((e) => {
               const from = navNodes.find((n) => n.id === e.fromNodeId);
               const to = navNodes.find((n) => n.id === e.toNodeId);
               if (!from || !to) return null;
+              const manual = e.source === "manual";
               return (
                 <line
                   key={e.id}
@@ -399,9 +400,12 @@ export function FloorEditor({
                   y1={worldY(from.position.y)}
                   x2={to.position.x}
                   y2={worldY(to.position.y)}
-                  stroke="#cbd5e1"
-                  strokeWidth={0.15}
-                  opacity={0.7}
+                  stroke={manual ? "#7c3aed" : "#cbd5e1"}
+                  strokeWidth={manual ? 0.3 : 0.15}
+                  opacity={manual ? 0.95 : 0.7}
+                  strokeDasharray={
+                    manual && !e.wheelchairAccessible ? "0.5 0.3" : undefined
+                  }
                 />
               );
             })}

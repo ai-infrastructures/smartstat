@@ -36,6 +36,7 @@ import {
   listFloorsForBuilding,
   listPoisForFloor,
 } from "../../lib/data";
+import { supabase } from "../../lib/supabase/client";
 import { isPositionFresh, useUserPosition } from "../../lib/userPosition";
 import { categoryColor, colors, fontSize, radius, spacing } from "../../lib/theme";
 
@@ -116,6 +117,56 @@ export default function NavigateScreen() {
       active = false;
     };
   }, [poiId]);
+
+  /**
+   * Realtime: when the admin moves a POI / adds an edge / renames something,
+   * pull a fresh snapshot of THIS floor so the navigating user sees the
+   * change without restarting the app.
+   */
+  useEffect(() => {
+    if (!floor) return;
+    const floorId = floor.id;
+    let cancelled = false;
+
+    const refresh = async () => {
+      try {
+        const [poisList, graph] = await Promise.all([
+          listPoisForFloor(floorId),
+          getFloorGraph(floorId),
+        ]);
+        if (cancelled) return;
+        setPois(poisList);
+        setNodes(graph.nodes);
+        setEdges(graph.edges);
+      } catch {
+        /* swallow — next change will retry */
+      }
+    };
+
+    const channel = supabase
+      .channel(`floor:${floorId}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "pois", filter: `floor_id=eq.${floorId}` },
+        refresh
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "nav_nodes", filter: `floor_id=eq.${floorId}` },
+        refresh
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "nav_edges" },
+        refresh
+      )
+      .subscribe();
+
+    return () => {
+      cancelled = true;
+      supabase.removeChannel(channel);
+    };
+  }, [floor]);
 
   const poiToNode = useMemo(() => {
     const m = new Map<string, NavNode>();

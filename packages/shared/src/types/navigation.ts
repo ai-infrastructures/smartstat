@@ -28,6 +28,8 @@ export interface NavNode {
   interFloorLinkId?: string;
 }
 
+export type NavEdgeSource = "auto" | "manual" | "seed";
+
 export interface NavEdge {
   id: string;
   fromNodeId: string;
@@ -38,6 +40,8 @@ export interface NavEdge {
   wheelchairAccessible: boolean;
   /** Bi-directional by default */
   oneWay?: boolean;
+  /** Where did this edge come from — auto-generated, drawn by admin, or seeded */
+  source?: NavEdgeSource;
 }
 
 /**

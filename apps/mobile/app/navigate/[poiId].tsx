@@ -10,6 +10,7 @@ import {
 } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
+import * as Speech from "expo-speech";
 import Svg, {
   Circle,
   Image as SvgImage,
@@ -46,6 +47,7 @@ export default function NavigateScreen() {
   const [edges, setEdges] = useState<NavEdge[]>([]);
   const [startPoiId, setStartPoiId] = useState<string | null>(null);
   const [wheelchair, setWheelchair] = useState(false);
+  const [voiceOn, setVoiceOn] = useState(true);
   const [floorPlanUrl, setFloorPlanUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -107,6 +109,15 @@ export default function NavigateScreen() {
       wheelchairAccessible: wheelchair,
     });
   }, [startPoiId, destination, poiToNode, nodes, edges, wheelchair]);
+
+  // Speak the route every time it changes (and voice is on)
+  useEffect(() => {
+    if (!voiceOn || !route) return;
+    speakRoute(route);
+    return () => {
+      Speech.stop();
+    };
+  }, [route, voiceOn]);
 
   const onChangeStart = useCallback(() => {
     // simple cycling between candidates for now (entrances/QR-anchored)
@@ -175,12 +186,24 @@ export default function NavigateScreen() {
         <Text style={styles.startChange}>Change</Text>
       </TouchableOpacity>
 
-      {/* Accessibility toggle */}
+      {/* Accessibility & voice toggles */}
       <View style={styles.toggleRow}>
         <Text style={styles.toggleLabel}>♿ Wheelchair accessible</Text>
         <Switch
           value={wheelchair}
           onValueChange={setWheelchair}
+          trackColor={{ false: "#cbd5e1", true: colors.primary }}
+        />
+      </View>
+      <View style={styles.toggleRow}>
+        <Text style={styles.toggleLabel}>🔊 Voice guidance</Text>
+        <Switch
+          value={voiceOn}
+          onValueChange={(v) => {
+            setVoiceOn(v);
+            if (!v) Speech.stop();
+            else if (route) speakRoute(route);
+          }}
           trackColor={{ false: "#cbd5e1", true: colors.primary }}
         />
       </View>
@@ -221,6 +244,26 @@ export default function NavigateScreen() {
       </ScrollView>
     </SafeAreaView>
   );
+}
+
+function speakRoute(route: Route) {
+  Speech.stop();
+  // Build a single concatenated utterance so it reads as a coherent sequence.
+  // Native TTS engines handle pauses around punctuation.
+  const text = route.steps
+    .map((s, i) =>
+      i === 0
+        ? `${s.instruction}.`
+        : i === route.steps.length - 1
+        ? `Finally, ${s.instruction.toLowerCase()}.`
+        : `Then, ${s.instruction.toLowerCase()}.`
+    )
+    .join(" ");
+  Speech.speak(text, {
+    language: "en-US",
+    rate: 1.0,
+    pitch: 1.0,
+  });
 }
 
 function FloorSvg({

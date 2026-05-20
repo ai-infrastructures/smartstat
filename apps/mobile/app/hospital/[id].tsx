@@ -8,7 +8,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import type { Poi, Tenant } from "@smartstat/shared";
 import {
@@ -92,11 +92,27 @@ export default function HospitalScreen() {
 
   return (
     <SafeAreaView style={styles.safe} edges={["bottom"]}>
+      <Stack.Screen
+        options={{
+          title: tenant.name,
+          headerStyle: { backgroundColor: accent },
+          headerTintColor: "#fff",
+          headerTitleStyle: { color: "#fff", fontSize: 17, fontWeight: "600" },
+        }}
+      />
       <View style={[styles.banner, { backgroundColor: accent }]}>
         <Text style={styles.bannerTitle}>{tenant.name}</Text>
         <Text style={styles.bannerSubtitle}>
           {tenant.branding.appDisplayName}
         </Text>
+        <TouchableOpacity
+          style={styles.scanFromHospital}
+          onPress={() => router.push("/scan")}
+        >
+          <Text style={styles.scanFromHospitalText}>
+            ⬛  Scan a QR to find &quot;You are here&quot;
+          </Text>
+        </TouchableOpacity>
       </View>
 
       <View style={styles.searchBox}>
@@ -192,6 +208,19 @@ const styles = StyleSheet.create({
     color: "rgba(255,255,255,0.85)",
     fontSize: fontSize.sm,
     marginTop: 2,
+  },
+  scanFromHospital: {
+    marginTop: spacing.md,
+    backgroundColor: "rgba(255,255,255,0.18)",
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+    borderRadius: radius.md,
+    alignSelf: "flex-start",
+  },
+  scanFromHospitalText: {
+    color: "#fff",
+    fontSize: fontSize.sm,
+    fontWeight: "600",
   },
   searchBox: {
     marginHorizontal: spacing.xl,

@@ -28,6 +28,14 @@ export default function RootLayout() {
           name="navigate/[poiId]"
           options={{ title: "Directions", headerBackTitle: "Back" }}
         />
+        <Stack.Screen
+          name="scan/index"
+          options={{
+            title: "Scan QR",
+            presentation: "modal",
+            headerShown: false,
+          }}
+        />
       </Stack>
     </SafeAreaProvider>
   );

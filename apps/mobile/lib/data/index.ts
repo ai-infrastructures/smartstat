@@ -237,6 +237,38 @@ export async function getFloorGraph(
 }
 
 /**
+ * Look up a QR anchor by its code. Returns the node + the floor + the
+ * building + the tenant so the app can deep-link into navigation.
+ */
+export async function findQrAnchor(qrCode: string): Promise<
+  | {
+      node: NavNode;
+      floor: Floor;
+      building: Building;
+      tenant: Tenant;
+    }
+  | null
+> {
+  const { data: nodeRow, error: nErr } = await supabase
+    .from("nav_nodes")
+    .select("*")
+    .eq("qr_code", qrCode)
+    .eq("type", "qr_anchor")
+    .maybeSingle();
+  if (nErr || !nodeRow) return null;
+
+  const node = mapNavNode(nodeRow);
+  const floor = await getFloor(node.floorId);
+  if (!floor) return null;
+  const building = await getBuilding(floor.buildingId);
+  if (!building) return null;
+  const tenant = await getTenant(building.tenantId);
+  if (!tenant) return null;
+
+  return { node, floor, building, tenant };
+}
+
+/**
  * Get a signed URL to display a floor plan image (private bucket).
  * Returns null if no floor plan uploaded.
  */

@@ -93,6 +93,16 @@ export default function HospitalSelectScreen() {
           ) : null
         }
       />
+
+      {/* Floating Scan QR button */}
+      <TouchableOpacity
+        style={styles.fab}
+        activeOpacity={0.85}
+        onPress={() => router.push("/scan")}
+      >
+        <Text style={styles.fabIcon}>⬛</Text>
+        <Text style={styles.fabText}>Scan QR</Text>
+      </TouchableOpacity>
     </SafeAreaView>
   );
 }
@@ -200,4 +210,23 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginTop: spacing.xs,
   },
+  fab: {
+    position: "absolute",
+    right: spacing.xl,
+    bottom: spacing.xxl,
+    backgroundColor: colors.primary,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+    borderRadius: radius.pill,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
+    shadowColor: "#000",
+    shadowOpacity: 0.18,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 6,
+  },
+  fabIcon: { color: "#fff", fontSize: 16 },
+  fabText: { color: "#fff", fontSize: fontSize.base, fontWeight: "700" },
 });

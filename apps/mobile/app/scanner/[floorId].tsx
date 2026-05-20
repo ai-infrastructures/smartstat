@@ -12,7 +12,11 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import * as DocumentPicker from "expo-document-picker";
 import type { Floor } from "@smartstat/shared";
-import { getFloor, uploadFloorMesh } from "../../lib/data";
+import {
+  getFloor,
+  uploadFloorMesh,
+  uploadFloorPlan,
+} from "../../lib/data";
 import { hapticSuccess, hapticError } from "../../lib/haptics";
 import { colors, fontSize, radius, spacing } from "../../lib/theme";
 
@@ -28,10 +32,12 @@ export default function ScannerFloorScreen() {
   const router = useRouter();
   const [floor, setFloor] = useState<Floor | null>(null);
   const [loading, setLoading] = useState(true);
-  const [uploading, setUploading] = useState(false);
+  const [meshUploading, setMeshUploading] = useState(false);
+  const [planUploading, setPlanUploading] = useState(false);
   const [progress, setProgress] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [done, setDone] = useState(false);
+  const [meshDone, setMeshDone] = useState(false);
+  const [planDone, setPlanDone] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -48,11 +54,9 @@ export default function ScannerFloorScreen() {
     };
   }, [floorId]);
 
-  async function onPickAndUpload() {
+  async function pickAndUploadMesh() {
     if (!floor) return;
     setError(null);
-    setDone(false);
-
     const pick = await DocumentPicker.getDocumentAsync({
       type: ["model/gltf-binary", "*/*"],
       copyToCacheDirectory: true,
@@ -60,8 +64,6 @@ export default function ScannerFloorScreen() {
     });
     if (pick.canceled || !pick.assets || pick.assets.length === 0) return;
     const file = pick.assets[0]!;
-
-    // Loose validation — Polycam exports .glb (some platforms .obj or .ply too)
     const lower = file.name.toLowerCase();
     if (
       !lower.endsWith(".glb") &&
@@ -70,21 +72,16 @@ export default function ScannerFloorScreen() {
       !lower.endsWith(".gltf")
     ) {
       hapticError();
-      setError(`Unsupported file: ${file.name}. Use .glb, .gltf, .obj or .ply.`);
+      setError(`Unsupported mesh: ${file.name}. Use .glb, .gltf, .obj or .ply.`);
       return;
     }
-
-    setUploading(true);
-    setProgress("Uploading mesh…");
+    setMeshUploading(true);
+    setProgress("Uploading 3D mesh…");
     try {
+      const tenantId = (await fetchFloorTenant(floor.id)) ?? "";
       const out = await uploadFloorMesh({
         floorId: floor.id,
-        tenantId: floor.buildingId
-          ? // We need tenant id — fetch via the loaded floor row's tenant_id.
-            // Floor.buildingId is not enough — the bundle has tenantId on it
-            // but our Floor shape doesn't expose it directly. We refetch.
-            (await fetchFloorTenant(floor.id)) ?? ""
-          : "",
+        tenantId,
         file: {
           uri: file.uri,
           name: file.name,
@@ -92,13 +89,58 @@ export default function ScannerFloorScreen() {
         },
       });
       hapticSuccess();
-      setProgress(`Uploaded to ${out.path}`);
-      setDone(true);
+      setProgress(`Mesh saved to ${out.path}`);
+      setMeshDone(true);
     } catch (e) {
       hapticError();
-      setError(e instanceof Error ? e.message : "Upload failed");
+      setError(e instanceof Error ? e.message : "Mesh upload failed");
     } finally {
-      setUploading(false);
+      setMeshUploading(false);
+    }
+  }
+
+  async function pickAndUploadPlan() {
+    if (!floor) return;
+    setError(null);
+    const pick = await DocumentPicker.getDocumentAsync({
+      type: ["image/png", "image/jpeg", "application/pdf", "*/*"],
+      copyToCacheDirectory: true,
+      multiple: false,
+    });
+    if (pick.canceled || !pick.assets || pick.assets.length === 0) return;
+    const file = pick.assets[0]!;
+    const lower = file.name.toLowerCase();
+    if (
+      !lower.endsWith(".png") &&
+      !lower.endsWith(".jpg") &&
+      !lower.endsWith(".jpeg") &&
+      !lower.endsWith(".pdf")
+    ) {
+      hapticError();
+      setError(`Unsupported plan: ${file.name}. Use .png, .jpg or .pdf.`);
+      return;
+    }
+    setPlanUploading(true);
+    setProgress("Uploading 2D floor plan…");
+    try {
+      const tenantId = (await fetchFloorTenant(floor.id)) ?? "";
+      const out = await uploadFloorPlan({
+        floorId: floor.id,
+        tenantId,
+        file: {
+          uri: file.uri,
+          name: file.name,
+          mimeType: file.mimeType ?? undefined,
+        },
+      });
+      hapticSuccess();
+      setProgress(`Plan saved to ${out.path}`);
+      setPlanDone(true);
+    } catch (e) {
+      hapticError();
+      setError(e instanceof Error ? e.message : "Plan upload failed");
+    } finally {
+      setPlanUploading(false);
     }
   }
 
@@ -151,58 +193,106 @@ export default function ScannerFloorScreen() {
           />
           <Step
             n={3}
-            text="Process the scan in Polycam and export as GLB (preferred) or OBJ."
+            text="Process the scan in Polycam. Export TWO files: the 3D mesh as GLB, and the 2D floor plan as PNG or PDF (Polycam Pro)."
           />
           <Step
             n={4}
-            text="Come back here and tap the upload button below to attach the file."
+            text="Upload both files below — the floor plan is what admins will overlay POIs on."
           />
         </Section>
 
-        <Section title="Upload">
+        <Section title="1. Upload 3D mesh (.glb)">
+          <Text style={styles.cardHint}>
+            Used as the source for auto-generated wayfinding data.
+            File should be GLB, GLTF, OBJ or PLY.
+          </Text>
           <TouchableOpacity
             style={[
               styles.uploadBtn,
-              (uploading || done) && { opacity: 0.7 },
+              meshDone && styles.uploadBtnDone,
+              meshUploading && { opacity: 0.7 },
             ]}
-            onPress={onPickAndUpload}
-            disabled={uploading}
+            onPress={pickAndUploadMesh}
+            disabled={meshUploading}
             activeOpacity={0.85}
           >
-            {uploading ? (
+            {meshUploading ? (
               <ActivityIndicator color="#fff" />
-            ) : done ? (
-              <>
-                <Feather name="check-circle" size={18} color="#fff" />
-                <Text style={styles.uploadBtnText}>
-                  Uploaded · upload another
-                </Text>
-              </>
             ) : (
               <>
-                <Feather name="upload-cloud" size={18} color="#fff" />
-                <Text style={styles.uploadBtnText}>Pick file and upload</Text>
+                <Feather
+                  name={meshDone ? "check-circle" : "box"}
+                  size={18}
+                  color="#fff"
+                />
+                <Text style={styles.uploadBtnText}>
+                  {meshDone ? "Mesh uploaded · replace" : "Pick mesh file"}
+                </Text>
               </>
             )}
           </TouchableOpacity>
-
-          {progress && (
-            <Text style={styles.progressText}>{progress}</Text>
-          )}
-          {error && (
-            <View style={styles.errBox}>
-              <Feather name="alert-triangle" size={14} color="#92400e" />
-              <Text style={styles.errText}>{error}</Text>
-            </View>
-          )}
         </Section>
 
-        {done && (
+        <Section title="2. Upload 2D floor plan (.png / .pdf)">
+          <Text style={styles.cardHint}>
+            Top-down view of the floor — Polycam exports this as a PDF/PNG.
+            Becomes the background the admin overlays POIs on.
+          </Text>
+          <TouchableOpacity
+            style={[
+              styles.uploadBtn,
+              styles.uploadBtnSecondary,
+              planDone && styles.uploadBtnSecondaryDone,
+              planUploading && { opacity: 0.7 },
+            ]}
+            onPress={pickAndUploadPlan}
+            disabled={planUploading}
+            activeOpacity={0.85}
+          >
+            {planUploading ? (
+              <ActivityIndicator color={colors.primary} />
+            ) : (
+              <>
+                <Feather
+                  name={planDone ? "check-circle" : "image"}
+                  size={18}
+                  color={planDone ? "#fff" : colors.primary}
+                />
+                <Text
+                  style={[
+                    styles.uploadBtnTextSecondary,
+                    planDone && { color: "#fff" },
+                  ]}
+                >
+                  {planDone ? "Plan uploaded · replace" : "Pick floor plan file"}
+                </Text>
+              </>
+            )}
+          </TouchableOpacity>
+        </Section>
+
+        {progress && <Text style={styles.progressText}>{progress}</Text>}
+        {error && (
+          <View style={[styles.errBox, { marginHorizontal: spacing.xl }]}>
+            <Feather name="alert-triangle" size={14} color="#92400e" />
+            <Text style={styles.errText}>{error}</Text>
+          </View>
+        )}
+
+        {(meshDone || planDone) && (
           <View style={styles.doneCard}>
             <Feather name="check-circle" size={24} color={colors.success} />
-            <Text style={styles.doneTitle}>Scan submitted</Text>
+            <Text style={styles.doneTitle}>
+              {meshDone && planDone
+                ? "Both files submitted"
+                : meshDone
+                ? "Mesh submitted"
+                : "Floor plan submitted"}
+            </Text>
             <Text style={styles.doneBody}>
-              An admin will place POIs on this floor and publish it.
+              {meshDone && planDone
+                ? "Admin will place POIs on the plan and publish."
+                : "You can add the other file later from this same screen."}
             </Text>
             <TouchableOpacity
               style={styles.linkBtn}
@@ -335,6 +425,12 @@ const styles = StyleSheet.create({
     fontSize: fontSize.sm,
     lineHeight: 20,
   },
+  cardHint: {
+    fontSize: fontSize.xs,
+    color: colors.textMuted,
+    marginBottom: spacing.sm,
+    lineHeight: 18,
+  },
   uploadBtn: {
     flexDirection: "row",
     alignItems: "center",
@@ -344,7 +440,22 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     borderRadius: radius.md,
   },
+  uploadBtnDone: { backgroundColor: colors.success },
+  uploadBtnSecondary: {
+    backgroundColor: "transparent",
+    borderWidth: 1.5,
+    borderColor: colors.primary,
+  },
+  uploadBtnSecondaryDone: {
+    backgroundColor: colors.success,
+    borderColor: colors.success,
+  },
   uploadBtnText: { color: "#fff", fontSize: fontSize.base, fontWeight: "700" },
+  uploadBtnTextSecondary: {
+    color: colors.primary,
+    fontSize: fontSize.base,
+    fontWeight: "700",
+  },
   progressText: {
     color: colors.textMuted,
     fontSize: fontSize.xs,

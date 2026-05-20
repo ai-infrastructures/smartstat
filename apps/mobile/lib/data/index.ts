@@ -409,6 +409,47 @@ export async function uploadFloorMesh(opts: {
   return { path };
 }
 
+/**
+ * Upload a 2D floor plan image to floor-plans/<tenant>/<floor>.<ext>
+ * and update floor.floorplan_2d_url. The image is shown as the
+ * background of the admin floor editor — operators overlay POIs on top.
+ */
+export async function uploadFloorPlan(opts: {
+  floorId: string;
+  tenantId: string;
+  file: { uri: string; name: string; mimeType?: string };
+}): Promise<{ path: string }> {
+  const { floorId, tenantId, file } = opts;
+  const ext = (file.name.split(".").pop() ?? "png").toLowerCase();
+  const path = `${tenantId}/${floorId}.${ext}`;
+
+  const resp = await fetch(file.uri);
+  const blob = await resp.blob();
+
+  const inferred =
+    ext === "pdf"
+      ? "application/pdf"
+      : ext === "jpg" || ext === "jpeg"
+      ? "image/jpeg"
+      : "image/png";
+
+  const { error: upErr } = await supabase.storage
+    .from("floor-plans")
+    .upload(path, blob, {
+      contentType: file.mimeType ?? inferred,
+      upsert: true,
+    });
+  if (upErr) throw upErr;
+
+  const { error: dbErr } = await supabase
+    .from("floors")
+    .update({ floorplan_2d_url: path })
+    .eq("id", floorId);
+  if (dbErr) throw dbErr;
+
+  return { path };
+}
+
 export async function logSearchEvent(opts: {
   tenantId: string;
   query: string;

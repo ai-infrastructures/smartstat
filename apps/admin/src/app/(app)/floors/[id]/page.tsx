@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { Pencil, Printer } from "lucide-react";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { GeneratePlanButton } from "@/components/GeneratePlanButton";
 import { getFloor } from "@/lib/data/floors";
 import { getBuilding } from "@/lib/data/buildings";
 import { getTenant } from "@/lib/data/tenants";
@@ -54,7 +55,11 @@ export default async function FloorDetailPage({
           { label: floor.name },
         ]}
         action={
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <GeneratePlanButton
+              floorId={floor.id}
+              hasMesh={Boolean(floor.meshUrl)}
+            />
             <Link
               href={`/floors/${floor.id}/edit`}
               className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 hover:shadow-sm dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800"

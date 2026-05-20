@@ -18,9 +18,12 @@
 
 [build]
   base = "apps/admin"
-  # Don't pin a build command — let the Next.js adapter use its default
-  # (`next build`). It also auto-derives `publish` from the Next.js
-  # output, so we don't set that either.
+  # Both command and publish are REQUIRED — the adapter does not
+  # auto-derive them when base is a subdir. Without `publish` set,
+  # Netlify defaults publish=base and uploads the raw source dir.
+  # Paths are relative to `base` (i.e. apps/admin/).
+  command = "pnpm build"
+  publish = ".next"
 
 [build.environment]
   # pnpm 11.x requires Node 22.13+ (uses node:sqlite built-in).

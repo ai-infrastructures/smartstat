@@ -15,6 +15,7 @@ import {
   TopPoisTable,
   TopQueriesTable,
 } from "@/components/AnalyticsCharts";
+import { SendPushDialog } from "@/components/SendPushDialog";
 
 export default async function TenantDetailPage({
   params,
@@ -45,13 +46,16 @@ export default async function TenantDetailPage({
           { label: tenant.name },
         ]}
         action={
-          <Link
-            href={`/tenants/${tenant.id}/edit`}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 hover:shadow-sm dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800"
-          >
-            <Pencil className="h-3.5 w-3.5" strokeWidth={2} />
-            Edit
-          </Link>
+          <div className="flex items-center gap-2">
+            <SendPushDialog tenantId={tenant.id} tenantName={tenant.name} />
+            <Link
+              href={`/tenants/${tenant.id}/edit`}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 hover:shadow-sm dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800"
+            >
+              <Pencil className="h-3.5 w-3.5" strokeWidth={2} />
+              Edit
+            </Link>
+          </div>
         }
       />
 

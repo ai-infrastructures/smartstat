@@ -20,10 +20,12 @@ import {
 } from "../../../lib/data";
 import { colors, fontSize, radius, spacing } from "../../../lib/theme";
 import { IS_TENANT_LOCKED } from "../../../lib/tenantConfig";
+import { signOut, useMe } from "../../../lib/auth";
 
 export default function HospitalInfoScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
+  const { me } = useMe();
   const [tenant, setTenant] = useState<Tenant | null>(null);
   const [buildings, setBuildings] = useState<Building[]>([]);
   const [loading, setLoading] = useState(true);
@@ -164,6 +166,69 @@ export default function HospitalInfoScreen() {
                 : "Download maps for offline use"}
             </Text>
           </TouchableOpacity>
+        </Section>
+
+        {/* Account */}
+        <Section title="Account">
+          {me ? (
+            <View style={{ gap: spacing.sm }}>
+              <View style={styles.accountRow}>
+                <View
+                  style={[
+                    styles.supportIcon,
+                    { backgroundColor: accent + "18" },
+                  ]}
+                >
+                  <Feather name="user" size={18} color={accent} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.rowSubtitle}>Signed in as</Text>
+                  <Text style={styles.rowTitle} numberOfLines={1}>
+                    {me.email}
+                  </Text>
+                  <Text style={styles.roleBadge}>{me.role.replace("_", " ")}</Text>
+                </View>
+              </View>
+              {(me.role === "scanner_operator" ||
+                me.role === "tenant_admin" ||
+                me.role === "super_admin") && (
+                <TouchableOpacity
+                  style={[
+                    styles.downloadBtn,
+                    { borderColor: accent, marginTop: spacing.xs },
+                  ]}
+                  onPress={() => router.push("/scanner")}
+                  activeOpacity={0.8}
+                >
+                  <Feather name="upload-cloud" size={16} color={accent} />
+                  <Text style={[styles.downloadBtnText, { color: accent }]}>
+                    Open scanner workspace
+                  </Text>
+                </TouchableOpacity>
+              )}
+              <TouchableOpacity
+                style={styles.signOutBtn}
+                onPress={async () => {
+                  await signOut();
+                }}
+                activeOpacity={0.7}
+              >
+                <Feather name="log-out" size={14} color={colors.danger} />
+                <Text style={styles.signOutText}>Sign out</Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <TouchableOpacity
+              style={[styles.downloadBtn, { borderColor: accent }]}
+              onPress={() => router.push("/account/login")}
+              activeOpacity={0.8}
+            >
+              <Feather name="log-in" size={16} color={accent} />
+              <Text style={[styles.downloadBtnText, { color: accent }]}>
+                Sign in (staff only)
+              </Text>
+            </TouchableOpacity>
+          )}
         </Section>
 
         {/* About SmartStat */}
@@ -309,4 +374,30 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   downloadBtnText: { fontSize: fontSize.sm, fontWeight: "600" },
+  accountRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.md,
+  },
+  roleBadge: {
+    marginTop: 2,
+    fontSize: 10,
+    fontWeight: "700",
+    textTransform: "uppercase",
+    letterSpacing: 0.6,
+    color: colors.primary,
+  },
+  signOutBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    marginTop: spacing.xs,
+    paddingVertical: spacing.sm,
+  },
+  signOutText: {
+    color: colors.danger,
+    fontSize: fontSize.sm,
+    fontWeight: "600",
+  },
 });

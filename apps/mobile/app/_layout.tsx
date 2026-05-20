@@ -1,9 +1,26 @@
+import { useEffect } from "react";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { SafeAreaProvider } from "react-native-safe-area-context";
+import { supabase } from "../lib/supabase/client";
+import { registerForPushNotifications } from "../lib/push";
 import { colors } from "../lib/theme";
 
 export default function RootLayout() {
+  // Register the Expo push token whenever an auth session is available.
+  // Safe to call multiple times; the push helper bails early if not auth'd.
+  useEffect(() => {
+    registerForPushNotifications().catch(() => {});
+    const sub = supabase.auth.onAuthStateChange((event) => {
+      if (event === "SIGNED_IN" || event === "TOKEN_REFRESHED") {
+        registerForPushNotifications().catch(() => {});
+      }
+    });
+    return () => {
+      sub.data.subscription.unsubscribe();
+    };
+  }, []);
+
   return (
     <SafeAreaProvider>
       <StatusBar style="dark" />
@@ -35,6 +52,27 @@ export default function RootLayout() {
             title: "Scan QR",
             presentation: "modal",
             headerShown: false,
+          }}
+        />
+        <Stack.Screen
+          name="account/login"
+          options={{
+            presentation: "modal",
+            headerShown: false,
+          }}
+        />
+        <Stack.Screen
+          name="scanner/index"
+          options={{
+            title: "Scanner",
+            headerBackTitle: "Back",
+          }}
+        />
+        <Stack.Screen
+          name="scanner/[floorId]"
+          options={{
+            title: "Upload scan",
+            headerBackTitle: "Back",
           }}
         />
       </Stack>

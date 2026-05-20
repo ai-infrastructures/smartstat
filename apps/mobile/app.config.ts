@@ -124,6 +124,13 @@ export default ({ config }: ConfigContext): ExpoConfig => {
           cameraPermission: `Used to scan ${name} QR anchors to locate your position.`,
         },
       ],
+      [
+        "expo-notifications",
+        {
+          icon: asset("notification-icon.png", "./assets/icon.png"),
+          color: primaryColor,
+        },
+      ],
     ],
     extra: {
       // Baked-in tenant info — the app uses this to decide whether to

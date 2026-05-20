@@ -356,6 +356,59 @@ export async function getFloorBundle(floorId: string): Promise<{
   }
 }
 
+/**
+ * Floors that the signed-in scanner operator is allowed to upload scans for.
+ * RLS already restricts this to the operator's own tenant.
+ */
+export async function listFloorsForScanner(): Promise<Floor[]> {
+  const { data, error } = await supabase
+    .from("floors")
+    .select("*")
+    .order("building_id")
+    .order("level");
+  if (error) throw error;
+  return (data ?? []).map(mapFloor);
+}
+
+/**
+ * Upload a .glb mesh to floor-meshes/<tenant_id>/<floor_id>.glb and update
+ * the floor's mesh_url + scan_status='uploaded'. Caller must be auth'd and
+ * have scanner_operator (or higher) on the tenant that owns the floor.
+ */
+export async function uploadFloorMesh(opts: {
+  floorId: string;
+  tenantId: string;
+  file: { uri: string; name: string; mimeType?: string };
+}): Promise<{ path: string }> {
+  const { floorId, tenantId, file } = opts;
+
+  const ext = (file.name.split(".").pop() ?? "glb").toLowerCase();
+  const path = `${tenantId}/${floorId}.${ext}`;
+
+  const resp = await fetch(file.uri);
+  const blob = await resp.blob();
+
+  const { error: upErr } = await supabase.storage
+    .from("floor-meshes")
+    .upload(path, blob, {
+      contentType: file.mimeType ?? "model/gltf-binary",
+      upsert: true,
+    });
+  if (upErr) throw upErr;
+
+  const { error: dbErr } = await supabase
+    .from("floors")
+    .update({
+      mesh_url: path,
+      scan_status: "uploaded",
+      scanned_at: new Date().toISOString(),
+    })
+    .eq("id", floorId);
+  if (dbErr) throw dbErr;
+
+  return { path };
+}
+
 export async function logSearchEvent(opts: {
   tenantId: string;
   query: string;

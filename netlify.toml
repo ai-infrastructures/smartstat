@@ -1,0 +1,41 @@
+# Netlify deploy config for the SmartStat AI admin dashboard.
+#
+# Set this repo on Netlify with "Base directory" left empty (the build runs
+# from the repo root so the pnpm workspace can resolve @smartstat/shared).
+#
+# Required environment variables (set in Netlify UI → Site → Configuration
+# → Environment variables):
+#   NEXT_PUBLIC_SUPABASE_URL
+#   NEXT_PUBLIC_SUPABASE_ANON_KEY
+#
+# When Vercel access arrives, this file can be deleted — vercel.json takes
+# over and the repo deploys identically there.
+
+[build]
+  base = ""
+  command = "corepack enable && pnpm install --frozen-lockfile && pnpm --filter @smartstat/admin build"
+  publish = "apps/admin/.next"
+
+[build.environment]
+  NODE_VERSION = "20"
+  PNPM_VERSION = "11.1.3"
+  NEXT_TELEMETRY_DISABLED = "1"
+
+# Tell Netlify which Next.js app to use (it auto-detects but we're explicit
+# because we're in a monorepo).
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
+
+# Headers (security + performance)
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Permissions-Policy = "camera=(self), microphone=(), geolocation=()"
+
+[[headers]]
+  for = "/_next/static/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"

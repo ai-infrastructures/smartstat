@@ -16,6 +16,7 @@ import {
   TopQueriesTable,
 } from "@/components/AnalyticsCharts";
 import { SendPushDialog } from "@/components/SendPushDialog";
+import { InviteStaffDialog } from "@/components/InviteStaffDialog";
 
 export default async function TenantDetailPage({
   params,
@@ -46,7 +47,11 @@ export default async function TenantDetailPage({
           { label: tenant.name },
         ]}
         action={
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <InviteStaffDialog
+              tenantId={tenant.id}
+              tenantName={tenant.name}
+            />
             <SendPushDialog tenantId={tenant.id} tenantName={tenant.name} />
             <Link
               href={`/tenants/${tenant.id}/edit`}

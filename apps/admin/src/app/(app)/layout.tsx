@@ -1,6 +1,13 @@
 import { Sidebar } from "@/components/Sidebar";
 import { MobileNavBar } from "@/components/MobileNavBar";
 
+// Every authenticated admin page reads from Supabase at request time
+// (cookies + RLS-scoped queries) — there's nothing meaningful to prerender,
+// and prerendering would 1) leak nothing useful, 2) crash the build if env
+// vars aren't available at compile time on the host (Netlify, Vercel, ...).
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export default function AppLayout({
   children,
 }: {

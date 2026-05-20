@@ -12,3 +12,4 @@ export * from "./types/poi";
 export * from "./types/user";
 export * from "./types/navigation";
 export * from "./constants";
+export * from "./pathfinding";

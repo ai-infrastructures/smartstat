@@ -59,6 +59,8 @@ export default function ScanScreen() {
           anchorNodeId: hit.node.id,
           anchorCode: data,
           scannedAt: Date.now(),
+          uncertaintyM: 0,
+          stepsSinceScan: 0,
         });
 
         router.replace(`/hospital/${hit.tenant.id}`);

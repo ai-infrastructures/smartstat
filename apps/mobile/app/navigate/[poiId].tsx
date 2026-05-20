@@ -37,7 +37,12 @@ import {
   listFloorsForBuilding,
 } from "../../lib/data";
 import { supabase } from "../../lib/supabase/client";
-import { isPositionFresh, useUserPosition } from "../../lib/userPosition";
+import {
+  isPositionFresh,
+  shouldRescan,
+  useUserPosition,
+} from "../../lib/userPosition";
+import { useDeadReckoning } from "../../lib/deadReckoning";
 import { hapticSuccess, hapticWarning } from "../../lib/haptics";
 import { categoryColor, colors, fontSize, radius, spacing } from "../../lib/theme";
 
@@ -45,6 +50,8 @@ export default function NavigateScreen() {
   const { poiId } = useLocalSearchParams<{ poiId: string }>();
   const router = useRouter();
   const userPos = useUserPosition();
+  // Engage dead reckoning whenever we have a fresh anchor scan
+  useDeadReckoning(isPositionFresh(userPos));
   const [destination, setDestination] = useState<Poi | null>(null);
   const [floor, setFloor] = useState<Floor | null>(null);
   const [siblingFloors, setSiblingFloors] = useState<Floor[]>([]);
@@ -264,6 +271,19 @@ export default function NavigateScreen() {
         </View>
       )}
 
+      {shouldRescan(userPos) && (
+        <TouchableOpacity
+          style={styles.rescanBanner}
+          onPress={() => router.push("/scan")}
+          activeOpacity={0.85}
+        >
+          <Feather name="alert-triangle" size={12} color="#fff" />
+          <Text style={styles.offlineText}>
+            Position uncertain · tap to scan a QR
+          </Text>
+        </TouchableOpacity>
+      )}
+
       {/* Destination header */}
       <View style={styles.destBar}>
         <View style={[styles.destDot, { backgroundColor: destColor }]} />
@@ -402,7 +422,11 @@ export default function NavigateScreen() {
           floorPlanUrl={floorPlanUrl}
           userPosition={
             isPositionFresh(userPos) && userPos?.floorId === floor.id
-              ? { x: userPos.x, y: userPos.y }
+              ? {
+                  x: userPos.x,
+                  y: userPos.y,
+                  uncertaintyM: userPos.uncertaintyM ?? 0,
+                }
               : null
           }
         />
@@ -471,7 +495,7 @@ function FloorSvg({
   startPoiId: string | null;
   route: Route | null;
   floorPlanUrl: string | null;
-  userPosition: { x: number; y: number } | null;
+  userPosition: { x: number; y: number; uncertaintyM: number } | null;
 }) {
   const bbox = floor.bbox ?? [0, 0, 60, 40];
   const [xMin, yMin, xMax, yMax] = bbox;
@@ -551,15 +575,17 @@ function FloorSvg({
         />
       )}
 
-      {/* User position pin (from QR scan) */}
+      {/* User position pin (with growing uncertainty halo) */}
       {userPosition && (
         <G>
+          {/* Uncertainty halo — radius = uncertaintyM (clamped to a minimum) */}
           <Circle
             cx={userPosition.x}
             cy={worldY(userPosition.y)}
-            r={2.2}
-            fill="rgba(16,185,129,0.25)"
+            r={Math.max(2.2, userPosition.uncertaintyM)}
+            fill="rgba(16,185,129,0.18)"
           />
+          {/* Inner solid dot */}
           <Circle
             cx={userPosition.x}
             cy={worldY(userPosition.y)}
@@ -570,7 +596,7 @@ function FloorSvg({
           />
           <SvgText
             x={userPosition.x}
-            y={worldY(userPosition.y) - 1.8}
+            y={worldY(userPosition.y) - Math.max(2.4, userPosition.uncertaintyM + 0.6)}
             fontSize={1.2}
             textAnchor="middle"
             fontWeight={700}
@@ -722,6 +748,15 @@ const styles = StyleSheet.create({
     backgroundColor: colors.warning,
     paddingHorizontal: spacing.md,
     paddingVertical: 6,
+    justifyContent: "center",
+  },
+  rescanBanner: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    backgroundColor: "#f97316",
+    paddingHorizontal: spacing.md,
+    paddingVertical: 8,
     justifyContent: "center",
   },
   offlineText: { color: "#fff", fontSize: fontSize.xs, fontWeight: "700" },

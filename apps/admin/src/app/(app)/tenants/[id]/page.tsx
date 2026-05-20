@@ -3,7 +3,17 @@ import Link from "next/link";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getTenant, getTenantStats } from "@/lib/data/tenants";
 import { listBuildings } from "@/lib/data/buildings";
+import {
+  getDailySearches,
+  getTopPois,
+  getTopQueries,
+} from "@/lib/data/analytics";
 import { PageHeader } from "@/components/PageHeader";
+import {
+  DailySearchesChart,
+  TopPoisTable,
+  TopQueriesTable,
+} from "@/components/AnalyticsCharts";
 
 export default async function TenantDetailPage({
   params,
@@ -15,10 +25,14 @@ export default async function TenantDetailPage({
   const tenant = await getTenant(supabase, id);
   if (!tenant) notFound();
 
-  const [stats, buildings] = await Promise.all([
-    getTenantStats(supabase, tenant.id),
-    listBuildings(supabase, { tenantId: tenant.id }),
-  ]);
+  const [stats, buildings, topQueries, topPois, dailySearches] =
+    await Promise.all([
+      getTenantStats(supabase, tenant.id),
+      listBuildings(supabase, { tenantId: tenant.id }),
+      getTopQueries(supabase, tenant.id, 30, 8),
+      getTopPois(supabase, tenant.id, 30, 8),
+      getDailySearches(supabase, tenant.id, 30),
+    ]);
 
   return (
     <>
@@ -71,6 +85,33 @@ export default async function TenantDetailPage({
           <StatTile label="Floors" value={stats.floors} />
           <StatTile label="POIs" value={stats.pois} />
         </div>
+
+        {/* Analytics */}
+        <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+          <header className="mb-4 flex items-center justify-between">
+            <h2 className="text-sm font-semibold text-slate-900 dark:text-white">
+              Analytics · last 30 days
+            </h2>
+            <span className="text-xs text-slate-500">
+              {dailySearches.reduce((a, d) => a + d.searches, 0)} searches
+            </span>
+          </header>
+          <DailySearchesChart data={dailySearches} />
+          <div className="mt-6 grid gap-6 md:grid-cols-2">
+            <div>
+              <h3 className="mb-3 text-xs font-medium uppercase tracking-wider text-slate-500">
+                Top queries
+              </h3>
+              <TopQueriesTable data={topQueries} />
+            </div>
+            <div>
+              <h3 className="mb-3 text-xs font-medium uppercase tracking-wider text-slate-500">
+                Top destinations
+              </h3>
+              <TopPoisTable data={topPois} />
+            </div>
+          </div>
+        </section>
 
         {/* Buildings list */}
         <section className="rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">

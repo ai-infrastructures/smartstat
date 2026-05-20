@@ -148,6 +148,17 @@ export async function getBuilding(id: string): Promise<Building | null> {
   return data ? mapBuilding(data) : null;
 }
 
+export async function listFloorsForBuilding(buildingId: string): Promise<Floor[]> {
+  const { data, error } = await supabase
+    .from("floors")
+    .select("*")
+    .eq("building_id", buildingId)
+    .eq("scan_status", "published")
+    .order("level", { ascending: false });
+  if (error) throw error;
+  return (data ?? []).map(mapFloor);
+}
+
 export async function listPublishedFloors(buildingId: string): Promise<Floor[]> {
   const { data, error } = await supabase
     .from("floors")

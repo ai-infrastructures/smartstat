@@ -16,8 +16,10 @@ import {
   updatePoiAction,
 } from "@/lib/actions/pois";
 import {
+  createEdgeAction,
   createQrAnchorAction,
   createWaypointAction,
+  deleteEdgeAction,
   deleteNavNodeAction,
   moveNavNodeAction,
   regenerateFloorGraphAction,
@@ -57,7 +59,7 @@ const CATEGORIES: PoiCategory[] = [
   "other",
 ];
 
-type Mode = "view" | "add" | "edit";
+type Mode = "view" | "add" | "edit" | "edges";
 type AddSubMode = "poi" | "waypoint" | "qr";
 
 interface Props {
@@ -86,6 +88,9 @@ export function FloorEditor({
   const [fromPoiId, setFromPoiId] = useState<string | null>(null);
   const [toPoiId, setToPoiId] = useState<string | null>(null);
   const [wheelchair, setWheelchair] = useState(false);
+  const [edgeFromNodeId, setEdgeFromNodeId] = useState<string | null>(null);
+  const [edgeWheelchair, setEdgeWheelchair] = useState(true);
+  const [edgeDeleteMode, setEdgeDeleteMode] = useState(false);
   const [, startTransition] = useTransition();
   const draggingRef = useRef<{ id: string; kind: "poi" | "node" } | null>(null);
   const svgRef = useRef<SVGSVGElement | null>(null);
@@ -218,6 +223,33 @@ export function FloorEditor({
     [pointerToWorld, pois, navNodes, worldY]
   );
 
+  // Edge mode: click a node to start, click another to connect or remove.
+  const handleNodeClickForEdges = useCallback(
+    (nodeId: string) => {
+      if (mode !== "edges") return false;
+      if (!edgeFromNodeId) {
+        setEdgeFromNodeId(nodeId);
+        return true;
+      }
+      if (edgeFromNodeId === nodeId) {
+        setEdgeFromNodeId(null);
+        return true;
+      }
+      const fd = new FormData();
+      fd.set("fromNodeId", edgeFromNodeId);
+      fd.set("toNodeId", nodeId);
+      fd.set("floorId", floor.id);
+      fd.set("wheelchair", edgeWheelchair ? "true" : "false");
+      const fn = edgeDeleteMode ? deleteEdgeAction : createEdgeAction;
+      startTransition(async () => {
+        await fn(fd);
+      });
+      setEdgeFromNodeId(null);
+      return true;
+    },
+    [mode, edgeFromNodeId, edgeWheelchair, edgeDeleteMode, floor.id]
+  );
+
   const onPointerUp = useCallback(
     (e: React.PointerEvent<SVGGElement>) => {
       const drag = draggingRef.current;
@@ -262,6 +294,9 @@ export function FloorEditor({
             </ModeBtn>
             <ModeBtn current={mode} value="edit" onClick={setMode}>
               ✎ Edit
+            </ModeBtn>
+            <ModeBtn current={mode} value="edges" onClick={setMode}>
+              ╱ Edges
             </ModeBtn>
           </div>
 
@@ -398,6 +433,7 @@ export function FloorEditor({
                   onPointerUp={onPointerUp}
                   onClick={(e) => {
                     e.stopPropagation();
+                    if (handleNodeClickForEdges(n.id)) return;
                     if (mode === "edit") {
                       setSelectedNodeId(n.id);
                       setSelectedPoiId(null);
@@ -407,8 +443,18 @@ export function FloorEditor({
                   <circle
                     cx={n.position.x}
                     cy={worldY(n.position.y)}
-                    r={selectedNodeId === n.id ? 0.5 : 0.25}
-                    fill={selectedNodeId === n.id ? "#0f172a" : "#94a3b8"}
+                    r={
+                      edgeFromNodeId === n.id || selectedNodeId === n.id
+                        ? 0.6
+                        : 0.25
+                    }
+                    fill={
+                      edgeFromNodeId === n.id
+                        ? "#f59e0b"
+                        : selectedNodeId === n.id
+                        ? "#0f172a"
+                        : "#94a3b8"
+                    }
                   />
                 </g>
               ))}
@@ -426,6 +472,7 @@ export function FloorEditor({
                   onPointerUp={onPointerUp}
                   onClick={(e) => {
                     e.stopPropagation();
+                    if (handleNodeClickForEdges(n.id)) return;
                     if (mode === "edit") {
                       setSelectedNodeId(n.id);
                       setSelectedPoiId(null);
@@ -437,8 +484,20 @@ export function FloorEditor({
                     y={worldY(n.position.y) - 0.5}
                     width={1.0}
                     height={1.0}
-                    fill={selectedNodeId === n.id ? "#0f172a" : "#1e293b"}
-                    stroke={selectedNodeId === n.id ? "#facc15" : "none"}
+                    fill={
+                      edgeFromNodeId === n.id
+                        ? "#f59e0b"
+                        : selectedNodeId === n.id
+                        ? "#0f172a"
+                        : "#1e293b"
+                    }
+                    stroke={
+                      edgeFromNodeId === n.id
+                        ? "#fff"
+                        : selectedNodeId === n.id
+                        ? "#facc15"
+                        : "none"
+                    }
                     strokeWidth={0.2}
                   />
                   <text
@@ -461,7 +520,10 @@ export function FloorEditor({
             const isSelected = selectedPoiId === p.id;
             const isStart = fromPoiId === p.id;
             const isEnd = toPoiId === p.id;
-            const highlighted = isSelected || isStart || isEnd;
+            const isEdgeFrom =
+              edgeFromNodeId !== null &&
+              poiToNode.get(p.id)?.id === edgeFromNodeId;
+            const highlighted = isSelected || isStart || isEnd || isEdgeFrom;
             return (
               <g
                 key={p.id}
@@ -471,6 +533,12 @@ export function FloorEditor({
                 onPointerUp={onPointerUp}
                 onClick={(e) => {
                   e.stopPropagation();
+                  // In edges mode, treat the POI's attached nav_node as the endpoint
+                  if (mode === "edges") {
+                    const attached = poiToNode.get(p.id);
+                    if (attached) handleNodeClickForEdges(attached.id);
+                    return;
+                  }
                   if (mode === "view") {
                     if (!fromPoiId) setFromPoiId(p.id);
                     else if (!toPoiId && p.id !== fromPoiId) setToPoiId(p.id);
@@ -599,6 +667,88 @@ export function FloorEditor({
               <RegenerateGraphButton floorId={floor.id} />
             </div>
           )
+        )}
+
+        {mode === "edges" && (
+          <div className="space-y-3">
+            <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
+              Manual edges
+            </h3>
+            <p className="text-xs text-slate-500">
+              Click any two nodes (POI, waypoint, QR anchor) to{" "}
+              {edgeDeleteMode ? "remove" : "connect"} them. Edges are
+              bidirectional by default.
+            </p>
+
+            <div className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50 p-1 dark:border-slate-800 dark:bg-slate-950">
+              <button
+                type="button"
+                onClick={() => setEdgeDeleteMode(false)}
+                className={
+                  !edgeDeleteMode
+                    ? "flex-1 rounded-md bg-white px-3 py-1.5 text-xs font-semibold text-slate-900 shadow-sm dark:bg-slate-700 dark:text-white"
+                    : "flex-1 rounded-md px-3 py-1.5 text-xs font-medium text-slate-600 hover:text-slate-900 dark:text-slate-400"
+                }
+              >
+                ＋ Connect
+              </button>
+              <button
+                type="button"
+                onClick={() => setEdgeDeleteMode(true)}
+                className={
+                  edgeDeleteMode
+                    ? "flex-1 rounded-md bg-white px-3 py-1.5 text-xs font-semibold text-red-700 shadow-sm dark:bg-slate-700 dark:text-red-300"
+                    : "flex-1 rounded-md px-3 py-1.5 text-xs font-medium text-slate-600 hover:text-slate-900 dark:text-slate-400"
+                }
+              >
+                － Remove
+              </button>
+            </div>
+
+            <label className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300">
+              <input
+                type="checkbox"
+                checked={edgeWheelchair}
+                onChange={(e) => setEdgeWheelchair(e.target.checked)}
+                className="h-4 w-4 rounded border-slate-300"
+              />
+              ♿ Wheelchair accessible
+            </label>
+
+            <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs dark:border-slate-800 dark:bg-slate-950">
+              <div className="font-semibold text-slate-700 dark:text-slate-300">
+                Step 1
+              </div>
+              <div className="text-slate-500">
+                {edgeFromNodeId
+                  ? "✓ First node selected (highlighted in amber)"
+                  : "Click the first node on the map."}
+              </div>
+              <div className="mt-2 font-semibold text-slate-700 dark:text-slate-300">
+                Step 2
+              </div>
+              <div className="text-slate-500">
+                {edgeFromNodeId
+                  ? `Click another node to ${
+                      edgeDeleteMode ? "remove" : "create"
+                    } the edge.`
+                  : "—"}
+              </div>
+              {edgeFromNodeId && (
+                <button
+                  type="button"
+                  onClick={() => setEdgeFromNodeId(null)}
+                  className="mt-3 text-blue-600 hover:underline"
+                >
+                  Cancel selection
+                </button>
+              )}
+            </div>
+
+            <div className="border-t border-slate-200 pt-3 dark:border-slate-800">
+              <RegenerateGraphButton floorId={floor.id} />
+            </div>
+          </div>
         )}
       </aside>
     </div>

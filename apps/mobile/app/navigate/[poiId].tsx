@@ -33,6 +33,7 @@ import {
   getFloorGraph,
   getFloorPlanUrl,
   getPoi,
+  listFloorsForBuilding,
   listPoisForFloor,
 } from "../../lib/data";
 import { isPositionFresh, useUserPosition } from "../../lib/userPosition";
@@ -44,6 +45,7 @@ export default function NavigateScreen() {
   const userPos = useUserPosition();
   const [destination, setDestination] = useState<Poi | null>(null);
   const [floor, setFloor] = useState<Floor | null>(null);
+  const [siblingFloors, setSiblingFloors] = useState<Floor[]>([]);
   const [pois, setPois] = useState<Poi[]>([]);
   const [nodes, setNodes] = useState<NavNode[]>([]);
   const [edges, setEdges] = useState<NavEdge[]>([]);
@@ -66,6 +68,14 @@ export default function NavigateScreen() {
         const fl = await getFloor(dest.floorId);
         if (!active) return;
         setFloor(fl);
+
+        if (fl?.buildingId) {
+          listFloorsForBuilding(fl.buildingId)
+            .then((floors) => {
+              if (active) setSiblingFloors(floors);
+            })
+            .catch(() => {});
+        }
 
         if (fl?.floorplan2dUrl) {
           getFloorPlanUrl(fl.floorplan2dUrl).then((u) => {
@@ -235,6 +245,49 @@ export default function NavigateScreen() {
           {usingScannedQR ? "Rescan" : "Change"}
         </Text>
       </TouchableOpacity>
+
+      {/* Floor chip strip (only if building has multiple published floors) */}
+      {siblingFloors.length > 1 && (
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.floorStrip}
+        >
+          {siblingFloors.map((sf) => {
+            const isCurrent = sf.id === floor.id;
+            return (
+              <View
+                key={sf.id}
+                style={[
+                  styles.floorChip,
+                  isCurrent && styles.floorChipActive,
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.floorChipLevel,
+                    isCurrent && styles.floorChipLevelActive,
+                  ]}
+                >
+                  {sf.level >= 0 ? `+${sf.level}` : sf.level}
+                </Text>
+                <Text
+                  style={[
+                    styles.floorChipName,
+                    isCurrent && styles.floorChipNameActive,
+                  ]}
+                  numberOfLines={1}
+                >
+                  {sf.name}
+                </Text>
+                {isCurrent && (
+                  <Text style={styles.floorChipDest}>destination</Text>
+                )}
+              </View>
+            );
+          })}
+        </ScrollView>
+      )}
 
       {/* Accessibility & voice toggles */}
       <View style={styles.toggleRow}>
@@ -528,6 +581,50 @@ const styles = StyleSheet.create({
   startLabel: { color: colors.textMuted, fontSize: fontSize.xs },
   startName: { color: colors.text, fontSize: fontSize.base, fontWeight: "500" },
   startChange: { color: colors.primary, fontSize: fontSize.sm, fontWeight: "600" },
+  floorStrip: {
+    paddingHorizontal: spacing.xl,
+    paddingVertical: spacing.sm,
+    gap: spacing.sm,
+    backgroundColor: colors.surface,
+    borderBottomWidth: 1,
+    borderColor: colors.border,
+  },
+  floorChip: {
+    minWidth: 64,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    backgroundColor: colors.background,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    alignItems: "center",
+    marginRight: spacing.sm,
+  },
+  floorChipActive: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+  },
+  floorChipLevel: {
+    fontSize: fontSize.lg,
+    fontWeight: "700",
+    color: colors.text,
+    fontVariant: ["tabular-nums"],
+  },
+  floorChipLevelActive: { color: "#fff" },
+  floorChipName: {
+    fontSize: fontSize.xs,
+    color: colors.textMuted,
+    marginTop: 2,
+  },
+  floorChipNameActive: { color: "rgba(255,255,255,0.85)" },
+  floorChipDest: {
+    fontSize: 9,
+    color: "#fff",
+    fontWeight: "700",
+    marginTop: 2,
+    textTransform: "uppercase",
+    letterSpacing: 0.4,
+  },
   toggleRow: {
     flexDirection: "row",
     alignItems: "center",

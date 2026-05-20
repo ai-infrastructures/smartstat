@@ -61,6 +61,35 @@ export function applyDeadReckoning(
   emit();
 }
 
+/**
+ * Manually set a position from a map tap. Used at home and other places
+ * without QR fiducials. We pick the nearest existing nav node so the
+ * pathfinder has a real starting node, and we set a small default
+ * uncertainty (manual taps are accurate to ~1.5 m by eye).
+ */
+export function setManualPosition(opts: {
+  tenantId: string;
+  buildingId: string;
+  floorId: string;
+  x: number;
+  y: number;
+  anchorNodeId: string;
+}) {
+  current = {
+    tenantId: opts.tenantId,
+    buildingId: opts.buildingId,
+    floorId: opts.floorId,
+    x: opts.x,
+    y: opts.y,
+    anchorNodeId: opts.anchorNodeId,
+    anchorCode: "manual",
+    scannedAt: Date.now(),
+    uncertaintyM: 1.5,
+    stepsSinceScan: 0,
+  };
+  emit();
+}
+
 export function getUserPosition(): UserPosition | null {
   return current;
 }

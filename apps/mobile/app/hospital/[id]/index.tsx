@@ -15,9 +15,11 @@ import type { Poi, Tenant } from "@smartstat/shared";
 import {
   getTenant,
   listBuildingsForTenant,
+  listFloorsForBuilding,
   searchPois,
   logSearchEvent,
 } from "../../../lib/data";
+import type { Floor } from "@smartstat/shared";
 import { isPositionFresh, useUserPosition } from "../../../lib/userPosition";
 import { hapticLight } from "../../../lib/haptics";
 import {
@@ -34,6 +36,7 @@ export default function HospitalScreen() {
   const userPos = useUserPosition();
   const posFresh = isPositionFresh(userPos) && userPos?.tenantId === id;
   const [tenant, setTenant] = useState<Tenant | null>(null);
+  const [firstFloorId, setFirstFloorId] = useState<string | null>(null);
   const [results, setResults] = useState<Poi[]>([]);
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(true);
@@ -44,9 +47,20 @@ export default function HospitalScreen() {
     let active = true;
     (async () => {
       try {
-        const [t] = await Promise.all([getTenant(id!), listBuildingsForTenant(id!)]);
+        const [t, buildings] = await Promise.all([
+          getTenant(id!),
+          listBuildingsForTenant(id!),
+        ]);
         if (!active) return;
         setTenant(t);
+        // Resolve the first published floor across all buildings — used
+        // as the canvas for the "tap to locate" screen.
+        if (buildings.length > 0) {
+          const floors = await listFloorsForBuilding(buildings[0]!.id);
+          if (active && floors.length > 0) {
+            setFirstFloorId(floors[0]!.id);
+          }
+        }
         // Initial: show all POIs for the tenant
         const initial = await searchPois({ tenantId: id!, query: "" });
         if (!active) return;
@@ -116,16 +130,28 @@ export default function HospitalScreen() {
             </Text>
           </View>
         ) : (
-          <TouchableOpacity
-            style={styles.scanFromHospital}
-            onPress={() => router.push(`/hospital/${id}/scan`)}
-            activeOpacity={0.85}
-          >
-            <Feather name="maximize" size={14} color="#fff" />
-            <Text style={styles.scanFromHospitalText}>
-              Scan a QR to find &quot;You are here&quot;
-            </Text>
-          </TouchableOpacity>
+          <View style={styles.locateCtaRow}>
+            {firstFloorId && (
+              <TouchableOpacity
+                style={styles.locateCta}
+                onPress={() => router.push(`/locate/${firstFloorId}`)}
+                activeOpacity={0.85}
+              >
+                <Feather name="map-pin" size={14} color="#fff" />
+                <Text style={styles.scanFromHospitalText}>
+                  Tap on map
+                </Text>
+              </TouchableOpacity>
+            )}
+            <TouchableOpacity
+              style={styles.locateCta}
+              onPress={() => router.push(`/hospital/${id}/scan`)}
+              activeOpacity={0.85}
+            >
+              <Feather name="maximize" size={14} color="#fff" />
+              <Text style={styles.scanFromHospitalText}>Scan a QR</Text>
+            </TouchableOpacity>
+          </View>
         )}
       </View>
 
@@ -261,6 +287,21 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     borderRadius: radius.md,
     alignSelf: "flex-start",
+  },
+  locateCtaRow: {
+    flexDirection: "row",
+    gap: spacing.sm,
+    marginTop: spacing.md,
+    flexWrap: "wrap",
+  },
+  locateCta: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    backgroundColor: "rgba(255,255,255,0.22)",
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+    borderRadius: radius.md,
   },
   scanFromHospitalText: {
     color: "#fff",

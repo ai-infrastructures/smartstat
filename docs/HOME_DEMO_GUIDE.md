@@ -116,23 +116,31 @@ Nel Floor Editor (la pagina del piano), in alto trovi 4 modalità:
 
 ---
 
-## Step 7 — Aggiungi 3 QR anchors fisici
+## Step 7 — Decidi come localizzarti
 
-Sempre nel Floor Editor:
+Per casa hai 2 opzioni:
 
-1. Modalità **＋ Add** → submode **⬛ QR anchor**
-2. Click vicino alla **porta d'ingresso** → si crea un QR anchor con codice tipo `SS-MX9YQ-A4B2`
-3. Click vicino al **corridoio centrale**
-4. Click vicino alla zona giorno (cucina/soggiorno)
+### Opzione A (CONSIGLIATA per casa) — Tap-to-locate, niente QR fisici
 
-Adesso ne hai 3 nel grafo.
+Non installi nulla in casa. Quando apri l'app e vai sul tenant "Casa Stefano",
+in alto vedi 2 pulsanti: **"Tap on map"** e **"Scan a QR"**.
 
-**Stampa i QR:**
+Tap su **"Tap on map"** → si apre una piantina con i POI delle stanze →
+tocca dove sei → conferma "I am here" → posizione settata.
 
-1. Header floor → click **🖨 QR codes**
-2. Si apre la pagina /floors/[id]/qr con la lista dei QR generati con immagine
-3. Click sul bottone **🖨 Print all** in alto
-4. Stampa su carta normale → ritaglia → attacca con nastro nelle posizioni corrispondenti in casa
+Da quel punto, pedometro + bussola tracciano i tuoi movimenti.
+Zero adesivi. Zero hardware.
+
+### Opzione B — QR fisici (utile per ospedali, opzionale a casa)
+
+Solo se vuoi provare anche questo flusso:
+
+1. Floor Editor → modalità **＋ Add** → submode **⬛ QR anchor**
+2. Click vicino alla porta d'ingresso, al corridoio, in zona giorno
+3. Header floor → click **🖨 QR codes** → **🖨 Print all** → stampa → attacca
+
+A casa, l'opzione A è meglio. L'opzione B serve quando uno scenario richiede
+self-service di tanti utenti diversi (es. ospedale).
 
 ---
 
